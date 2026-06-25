@@ -6,5 +6,11 @@
   "action": {
     "default_popup": "popup.html",
     "default_title": "PDF Diff"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "pdf-diff@pdfdiff.local",
+      "strict_min_version": "115.0"
+    }
   }
 }

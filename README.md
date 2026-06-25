@@ -1,6 +1,6 @@
 # PDF Diff
 
-PDF Diff is a Chrome Manifest V3 extension that compares two local PDFs in-browser and highlights textual differences.
+PDF Diff is a Manifest V3 browser extension that compares two local PDFs in-browser and highlights textual differences. It runs in Chrome, Microsoft Edge, and Firefox.
 
 ## Features
 
@@ -26,7 +26,7 @@ npm install
 npm run build
 ```
 
-The build output is written to `dist/` and can be loaded in Chrome as an unpacked extension.
+The build output is written to `dist/` and can be loaded as an unpacked extension in Chrome, Edge, or Firefox.
 
 ## Load in Chrome
 
@@ -34,6 +34,27 @@ The build output is written to `dist/` and can be loaded in Chrome as an unpacke
 2. Enable **Developer mode**
 3. Click **Load unpacked**
 4. Select the `dist` folder from your local project directory
+
+## Load in Microsoft Edge
+
+Edge is Chromium-based and loads the same `dist` build.
+
+1. Open `edge://extensions`
+2. Enable **Developer mode**
+3. Click **Load unpacked**
+4. Select the `dist` folder from your local project directory
+
+## Load in Firefox
+
+Firefox loads the same `dist` build as a temporary add-on. The manifest
+includes a `browser_specific_settings.gecko` entry so Firefox accepts it.
+
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click **Load Temporary Add-on…**
+3. Select the `manifest.json` file inside the `dist` folder
+
+Temporary add-ons are removed when Firefox restarts; reload it the same way
+after restarting.
 
 ## Test with local PDFs
 
