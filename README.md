@@ -33,7 +33,7 @@ The build output is written to `dist/` and can be loaded in Chrome as an unpacke
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked**
-4. Select `/home/runner/work/PDFDiff/PDFDiff/dist`
+4. Select the `dist` folder from your local project directory
 
 ## Test with local PDFs
 

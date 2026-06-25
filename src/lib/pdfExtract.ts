@@ -3,7 +3,7 @@ import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
-const TOKEN_REGEX = /[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?/g
+const TOKEN_REGEX = /[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)?/gu
 
 export type ExtractedPdfPage = {
   pageNumber: number

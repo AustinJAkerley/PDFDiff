@@ -3,12 +3,18 @@ import { createRoot } from 'react-dom/client'
 import Popup from './Popup'
 import '../styles.css'
 
+type ExtensionChrome = {
+  runtime?: { getURL?: (path: string) => string }
+  tabs?: { create?: (details: { url: string }) => void }
+}
+
+const extensionChrome = (globalThis as typeof globalThis & { chrome?: ExtensionChrome }).chrome
+
 const openDiffPage = async () => {
-  const runtimeUrl = (globalThis as { chrome?: { runtime?: { getURL?: (path: string) => string } } }).chrome?.runtime?.getURL?.('diff-page.html')
+  const runtimeUrl = extensionChrome?.runtime?.getURL?.('diff-page.html')
 
   if (runtimeUrl) {
-    const tabsApi = (globalThis as { chrome?: { tabs?: { create?: (details: { url: string }) => void } } }).chrome?.tabs
-    tabsApi?.create?.({ url: runtimeUrl })
+    extensionChrome?.tabs?.create?.({ url: runtimeUrl })
     return
   }
 

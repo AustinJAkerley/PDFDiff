@@ -18,6 +18,8 @@ export type RenderOptions = {
   mode: RenderMode
 }
 
+const TOKENS_PER_LINE = 20
+
 const chunk = (tokens: string[], size: number) => {
   const chunks: string[][] = []
 
@@ -70,7 +72,7 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
       emptyText.textContent = 'No selectable text found on this page.'
       textBlock.append(emptyText)
     } else {
-      for (const lineTokens of chunk(tokens, 20)) {
+      for (const lineTokens of chunk(tokens, TOKENS_PER_LINE)) {
         const line = document.createElement('p')
         line.className = 'pdf-page-line'
 
