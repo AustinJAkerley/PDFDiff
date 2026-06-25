@@ -130,6 +130,11 @@ body {
   color: #b91c1c;
 }
 
+.render-notice {
+  margin: 0.75rem 0;
+  color: #b45309;
+}
+
 .page-empty-text {
   margin: 0;
   color: #64748b;

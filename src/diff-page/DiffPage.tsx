@@ -57,6 +57,7 @@ export default function DiffPage() {
   const [activeChangeIndex, setActiveChangeIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [renderNotice, setRenderNotice] = useState<string | null>(null)
 
   const leftContainerRef = useRef<HTMLDivElement>(null)
   const rightContainerRef = useRef<HTMLDivElement>(null)
@@ -68,15 +69,30 @@ export default function DiffPage() {
 
     setIsLoading(true)
     setError(null)
+    setRenderNotice(null)
+
+    let originalExtraction: ExtractedPdf
+    let newExtraction: ExtractedPdf
 
     try {
-      const [originalExtraction, newExtraction] = await Promise.all([extractPdfText(left), extractPdfText(right)])
-      const diff = buildDiff(originalExtraction.pages, newExtraction.pages)
-      setOriginalText(originalExtraction)
-      setNewText(newExtraction)
-      setDiffResult(diff)
+      const extractions = await Promise.all([extractPdfText(left), extractPdfText(right)])
+      originalExtraction = extractions[0]
+      newExtraction = extractions[1]
+    } catch {
+      setError('Unable to read one or both PDFs. Please try different files.')
+      setIsLoading(false)
+      return
+    }
 
-      await Promise.all([
+    const diff = buildDiff(originalExtraction.pages, newExtraction.pages)
+    setOriginalText(originalExtraction)
+    setNewText(newExtraction)
+    setDiffResult(diff)
+
+    // Rendering is best-effort: a failure here (for example an unsupported
+    // image codec on a scanned PDF) must not hide the computed differences.
+    try {
+      const [leftResult, rightResult] = await Promise.all([
         renderPdfWithHighlights({
           file: left,
           container: leftContainerRef.current,
@@ -92,8 +108,12 @@ export default function DiffPage() {
           mode: 'added',
         }),
       ])
+
+      if (leftResult.failedPages > 0 || rightResult.failedPages > 0) {
+        setRenderNotice('Some pages could not be displayed, but detected text differences are still shown.')
+      }
     } catch {
-      setError('Unable to process one or both PDFs. Please try different files.')
+      setRenderNotice('The PDF previews could not be displayed, but detected text differences are still shown.')
     } finally {
       setIsLoading(false)
     }
@@ -172,10 +192,11 @@ export default function DiffPage() {
       </section>
 
       {error ? <p className="error-message">{error}</p> : null}
+      {renderNotice ? <p className="render-notice">{renderNotice}</p> : null}
       {isLoading ? <p>Processing PDFs...</p> : null}
 
-      {!originalText?.hasSelectableText && originalFile ? <p className="scan-warning">No selectable text found. This PDF may be scanned.</p> : null}
-      {!newText?.hasSelectableText && newFile ? <p className="scan-warning">No selectable text found. This PDF may be scanned.</p> : null}
+      {originalText && !originalText.hasSelectableText ? <p className="scan-warning">No selectable text found in the original PDF. It may be scanned.</p> : null}
+      {newText && !newText.hasSelectableText ? <p className="scan-warning">No selectable text found in the new PDF. It may be scanned.</p> : null}
 
       <section className="viewer-grid">
         <article>
