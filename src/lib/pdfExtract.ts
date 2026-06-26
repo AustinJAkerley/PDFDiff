@@ -1,9 +1,5 @@
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
-
-GlobalWorkerOptions.workerSrc = pdfWorkerUrl
-
-const TOKEN_REGEX = /[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)?/gu
+import { loadPdfDocument } from './pdfLoader'
+import { tokenize } from './tokenize'
 
 export type ExtractedPdfPage = {
   pageNumber: number
@@ -18,8 +14,7 @@ export type ExtractedPdf = {
 }
 
 export async function extractPdfText(file: File): Promise<ExtractedPdf> {
-  const loadingTask = getDocument({ data: new Uint8Array(await file.arrayBuffer()) })
-  const document = await loadingTask.promise
+  const document = await loadPdfDocument(new Uint8Array(await file.arrayBuffer()))
   const pages: ExtractedPdfPage[] = []
 
   for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
@@ -31,7 +26,7 @@ export async function extractPdfText(file: File): Promise<ExtractedPdf> {
       .replace(/\s+/g, ' ')
       .trim()
 
-    const tokens = (text.match(TOKEN_REGEX) ?? []).map((token) => token.toLowerCase())
+    const tokens = tokenize(text)
     pages.push({ pageNumber, text, tokens })
   }
 

@@ -2,10 +2,13 @@
   "manifest_version": 3,
   "name": "PDF Diff",
   "version": "0.1.0",
-  "description": "Compare two local PDFs and highlight text differences.",
+  "description": "Compare two local PDFs and highlight visual differences.",
   "action": {
     "default_popup": "popup.html",
     "default_title": "PDF Diff"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
   "browser_specific_settings": {
     "gecko": {

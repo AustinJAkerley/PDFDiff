@@ -1,16 +1,15 @@
 # PDF Diff
 
-PDF Diff is a Manifest V3 browser extension that compares two local PDFs in-browser and highlights textual differences. It runs in Chrome, Microsoft Edge, and Firefox.
+PDF Diff is a Manifest V3 browser extension that compares two local PDFs in-browser, renders the whole pages side by side as images, and boxes the visual differences directly on the rendered pages using a built-in pixel-diff engine. It runs in Chrome, Microsoft Edge, and Firefox.
 
 ## Features
 
 - Popup action with **Open PDF Diff** button
-- Side-by-side PDF rendering for original and new documents
-- Local text extraction via `pdf.js`
-- Local text diffing via `diff` (jsdiff)
-- Red highlights for removed text and green highlights for added text
-- Change navigator with total count, page number, and next/previous controls
-- Scanned/image-only fallback warning: **No selectable text found. This PDF may be scanned.**
+- Side-by-side **rendered** PDF pages (via `pdf.js`) showing the whole, unedited page image — not a text dump
+- **Image-based visual diff** computed in plain TypeScript: each page pair is compared pixel-by-pixel and every region that changed is boxed on both the original (left) and the new PDF (right)
+- Summary bar with the number of changed pages and difference regions
+- Change navigator listing every changed page; clicking a page scrolls both documents to it
+- Pages that exist in only one document are flagged as added/removed
 - No backend and no PDF upload
 
 ## Privacy
@@ -27,6 +26,14 @@ npm run build
 ```
 
 The build output is written to `dist/` and can be loaded as an unpacked extension in Chrome, Edge, or Firefox.
+
+The build also copies pdf.js's external resource bundles (CMaps, the standard 14
+fonts, and the WASM image decoders for scanned JBIG2/JPEG 2000 pages) into
+`dist/pdfjs/`. These are required so that PDFs using non-embedded standard
+fonts, CID/CJK fonts, or scanned images can be read and rendered. The visual
+diff itself is implemented in plain TypeScript (`src/lib/imageDiff.ts`) and needs
+no extra runtime. The extension manifest allows `wasm-unsafe-eval` so the pdf.js
+image decoders can run.
 
 ## Load in Chrome
 
@@ -58,12 +65,30 @@ after restarting.
 
 ## Test with local PDFs
 
-Use any two local PDF files from your machine.
+Sample PDFs are committed under [`samples/`](samples/) so you can verify the
+extension without supplying your own files:
+
+- `samples/text-original.pdf` and `samples/text-modified.pdf` — two documents
+  with several wording differences for the visual diff boxes and change
+  navigator.
+- `samples/scanned-no-text.pdf` — an image-only page that still renders and can
+  be compared visually.
+
+See [`samples/README.md`](samples/README.md) for the expected result of each
+check. You can also use any two local PDF files from your machine.
+
+For realistic, use-case-driven document pairs — including a real Texas Real
+Estate Commission (TREC 20-18) home purchase contract and a real IRS Schedule C
+(self-employed) tax form filled with fictional data, plus résumé, invoice,
+lease, and employment-offer mocks — see [`examples/`](examples/). Each pair is
+named `<name>_old.pdf` / `<name>_new.pdf` with a few meaningful edits;
+[`examples/README.md`](examples/README.md) lists what changed in each pair.
 
 Suggested quick checks:
 
-1. Choose two text-based PDFs with minor wording differences
-2. Verify removed words are highlighted in red on the left
-3. Verify added words are highlighted in green on the right
-4. Verify next/previous change buttons navigate across pages
-5. Verify scanned/image-only PDFs show the scanned warning message
+1. Choose two PDFs with minor differences
+2. Verify the whole pages render as images side by side
+3. Verify the regions that changed are boxed on both the original (left) and the new PDF (right)
+4. Verify the summary shows the number of changed pages and difference regions
+5. Verify the change navigator lists each changed page and clicking it scrolls both documents
+6. Verify next/previous buttons navigate across changed pages
