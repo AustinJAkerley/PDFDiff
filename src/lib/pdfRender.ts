@@ -1,3 +1,6 @@
+import { Util } from 'pdfjs-dist'
+import type { PageViewport } from 'pdfjs-dist'
+import type { TextItem } from 'pdfjs-dist/types/src/display/api'
 import { loadPdfDocument } from './pdfLoader'
 
 type RenderMode = 'added' | 'removed'
@@ -17,6 +20,10 @@ export type RenderOptions = {
 }
 
 const TOKENS_PER_LINE = 20
+
+// Mirrors the tokenizer in pdfExtract.ts so the words we locate on the page
+// match the tokens the diff engine compared.
+const TOKEN_REGEX = /[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)?/gu
 
 const chunk = (tokens: string[], size: number) => {
   const chunks: string[][] = []
@@ -65,6 +72,60 @@ const appendTextBlock = (pageSection: HTMLElement, tokens: string[], highlighted
   pageSection.append(textBlock)
 }
 
+// Locate the changed words inside a single text item and emit absolutely
+// positioned highlight boxes over the rendered page. Positions are expressed as
+// percentages of the page so they stay aligned while the canvas scales
+// responsively (the canvas is rendered at `width: 100%`).
+const appendItemHighlights = (
+  overlay: HTMLElement,
+  item: TextItem,
+  viewport: PageViewport,
+  highlighted: Set<string>,
+  mode: RenderMode,
+) => {
+  const str = item.str
+  if (!str) {
+    return
+  }
+
+  // Map the item's text-space transform into viewport (top-left origin) space.
+  const tx = Util.transform(viewport.transform, item.transform)
+  const fontHeight = Math.hypot(tx[2], tx[3])
+  if (fontHeight <= 0) {
+    return
+  }
+
+  const itemLeft = tx[4]
+  const itemTop = tx[5] - fontHeight
+  const itemWidth = item.width * viewport.scale
+
+  const highlightClass = mode === 'added' ? 'pdf-highlight-added' : 'pdf-highlight-removed'
+
+  TOKEN_REGEX.lastIndex = 0
+  let match: RegExpExecArray | null
+  while ((match = TOKEN_REGEX.exec(str)) !== null) {
+    const token = match[0].toLowerCase()
+    if (!highlighted.has(token)) {
+      continue
+    }
+
+    // Approximate the word's horizontal span from its character offset within
+    // the item; pdf.js does not expose per-glyph positions for text items.
+    const startFraction = match.index / str.length
+    const widthFraction = match[0].length / str.length
+    const wordLeft = itemLeft + itemWidth * startFraction
+    const wordWidth = itemWidth * widthFraction
+
+    const box = document.createElement('span')
+    box.className = `pdf-highlight ${highlightClass}`
+    box.style.left = `${(100 * wordLeft) / viewport.width}%`
+    box.style.top = `${(100 * itemTop) / viewport.height}%`
+    box.style.width = `${(100 * wordWidth) / viewport.width}%`
+    box.style.height = `${(100 * fontHeight) / viewport.height}%`
+    overlay.append(box)
+  }
+}
+
 export async function renderPdfWithHighlights({ file, container, textPages, highlightMap, mode, pageBadges }: RenderOptions): Promise<RenderResult> {
   container.innerHTML = ''
 
@@ -104,6 +165,8 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
     const tokens = textPages[pageNumber - 1]?.tokens ?? []
     const highlighted = highlightMap.get(pageNumber)
 
+    let rendered = false
+
     try {
       const page = await pdfDocument.getPage(pageNumber)
       const viewport = page.getViewport({ scale: 1.2 })
@@ -119,8 +182,29 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
       canvas.height = viewport.height
 
       await page.render({ canvasContext: context, viewport, canvas }).promise
-      pageSection.append(canvas)
+
+      // Wrap the canvas so the highlight overlay can be positioned over it.
+      const canvasWrap = document.createElement('div')
+      canvasWrap.className = 'pdf-page-canvas-wrap'
+      canvasWrap.append(canvas)
+
+      if (highlighted?.size) {
+        const overlay = document.createElement('div')
+        overlay.className = 'pdf-page-highlight-layer'
+
+        const textContent = await page.getTextContent()
+        for (const item of textContent.items) {
+          if ('str' in item) {
+            appendItemHighlights(overlay, item, viewport, highlighted, mode)
+          }
+        }
+
+        canvasWrap.append(overlay)
+      }
+
+      pageSection.append(canvasWrap)
       renderedPages += 1
+      rendered = true
     } catch {
       // A single page may fail to render (for example an unsupported image
       // codec) without preventing the rest of the document from displaying.
@@ -131,7 +215,13 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
       pageSection.append(failure)
     }
 
-    appendTextBlock(pageSection, tokens, highlighted, mode)
+    // Only fall back to the reflowed text dump when the page image is
+    // unavailable, so the diff is still visible without duplicating the
+    // already-highlighted rendered page.
+    if (!rendered) {
+      appendTextBlock(pageSection, tokens, highlighted, mode)
+    }
+
     container.append(pageSection)
   }
 
