@@ -35,6 +35,26 @@ body {
   color: #334155;
 }
 
+.browser-warning {
+  flex: 0 0 auto;
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #f59e0b;
+  border-radius: 0.4rem;
+  background: #fef3c7;
+  color: #7c2d12;
+  font-size: 0.85rem;
+}
+
+.browser-warning strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.browser-warning p {
+  margin: 0;
+}
+
 .viewer-root {
   display: flex;
   flex-direction: column;

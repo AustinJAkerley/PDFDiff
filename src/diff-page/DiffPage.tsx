@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import PdfViewer from './PdfViewer'
+import BrowserSupportWarning from '../components/BrowserSupportWarning'
 
 type Side = 'left' | 'right'
 
@@ -107,6 +108,8 @@ export default function DiffPage() {
         <h1>PDF Side by Side</h1>
         <p className="privacy-note">PDFs are opened locally in your browser and are never uploaded.</p>
       </header>
+
+      <BrowserSupportWarning />
 
       <div className="viewer-grid">
         <PdfPane
