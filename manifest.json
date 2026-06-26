@@ -3,6 +3,7 @@
   "name": "PDF Diff",
   "version": "0.1.0",
   "description": "Compare two local PDFs and highlight visual differences.",
+  "minimum_chrome_version": "103",
   "action": {
     "default_popup": "popup.html",
     "default_title": "PDF Diff"

@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { checkBrowserSupport } from '../lib/browserSupport'
 import { renderVisualDiff, type PageVisualDiff, type VisualDiffResult } from '../lib/visualDiff'
 
 type Side = 'left' | 'right'
@@ -78,6 +79,10 @@ export default function DiffPage() {
   const [error, setError] = useState<string | null>(null)
   const [renderNotice, setRenderNotice] = useState<string | null>(null)
 
+  // Detect once whether this browser can run the OpenCV image comparison so we
+  // can warn the user up front rather than silently reporting "no differences".
+  const browserSupport = useMemo(() => checkBrowserSupport(), [])
+
   const leftContainerRef = useRef<HTMLDivElement>(null)
   const rightContainerRef = useRef<HTMLDivElement>(null)
 
@@ -102,7 +107,12 @@ export default function DiffPage() {
 
       const notices: string[] = []
       if (!diff.openCvAvailable) {
-        notices.push('The image comparison engine could not start, so the PDFs are shown without difference boxes.')
+        notices.push(
+          browserSupport.message
+            ? browserSupport.message
+            : 'The image comparison engine could not start, so the PDFs are shown without difference boxes. ' +
+                'This usually means your browser is out of date — please update to the latest version of Chrome and try again.',
+        )
       }
       if (diff.failedPages > 0) {
         notices.push('Some pages could not be displayed as images.')
@@ -186,6 +196,9 @@ export default function DiffPage() {
         />
       </section>
 
+      {!browserSupport.supported && browserSupport.message ? (
+        <p className="error-message">{browserSupport.message}</p>
+      ) : null}
       {error ? <p className="error-message">{error}</p> : null}
       {renderNotice ? <p className="render-notice">{renderNotice}</p> : null}
       {isLoading ? <p className="loading-note">Rendering pages and comparing images…</p> : null}
@@ -236,8 +249,13 @@ export default function DiffPage() {
                 ))}
               </ol>
             </div>
-          ) : (
+          ) : result.openCvAvailable ? (
             <p className="no-changes">No visual differences detected between the two PDFs.</p>
+          ) : (
+            <p className="render-notice">
+              The image comparison engine did not run, so no difference boxes could be drawn. Update your browser and
+              try again to see what changed between the two PDFs.
+            </p>
           )}
 
           {activeChange ? (
