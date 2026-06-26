@@ -34,9 +34,19 @@ const FONTS = {
   italic: 'Helvetica-Oblique',
 }
 
-// Escape a string for a PDF literal `(...)` string.
+// Escape a string for a PDF literal `(...)` string. Backslash and parentheses
+// must be escaped; control characters are emitted as their PDF escape sequences
+// so a stray newline/tab in future content can't corrupt the content stream.
 function escapeText(text) {
-  return text.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
+    .replace(/\t/g, '\\t')
+    .replace(/[\b]/g, '\\b')
+    .replace(/\f/g, '\\f')
 }
 
 // Turn a list of laid-out pages into a content stream + page objects and write
