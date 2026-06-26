@@ -1,21 +1,21 @@
-# PDF Diff
+# PDF Side by Side
 
-PDF Diff is a Manifest V3 browser extension that compares two local PDFs in-browser and highlights textual differences. It runs in Chrome, Microsoft Edge, and Firefox.
+PDF Side by Side is a Manifest V3 browser extension that opens two local PDFs
+next to each other in a single tab. Each PDF is shown exactly as if you opened
+it in the browser, using the browser's built-in PDF viewer (toolbar, zoom,
+page thumbnails, print, download). It runs in Chrome, Microsoft Edge, and
+Firefox.
 
 ## Features
 
-- Popup action with **Open PDF Diff** button
-- Side-by-side PDF rendering for original and new documents
-- Local text extraction via `pdf.js`
-- Local text diffing via `diff` (jsdiff)
-- Red highlights for removed text and green highlights for added text
-- Change navigator with total count, page number, and next/previous controls
-- Scanned/image-only fallback warning: **No selectable text found. This PDF may be scanned.**
-- No backend and no PDF upload
+- Popup action with an **Open viewer** button
+- Two side-by-side panes, each rendering a PDF with the native browser viewer
+- Pick a file per pane via drag-and-drop or a file picker
+- No diffing, no text extraction, no backend, and no PDF upload
 
 ## Privacy
 
-PDFs are processed locally in your browser and are never uploaded.
+PDFs are opened locally in your browser and are never uploaded.
 
 See [PRIVACY.md](PRIVACY.md) for full details.
 
@@ -26,7 +26,8 @@ npm install
 npm run build
 ```
 
-The build output is written to `dist/` and can be loaded as an unpacked extension in Chrome, Edge, or Firefox.
+The build output is written to `dist/` and can be loaded as an unpacked
+extension in Chrome, Edge, or Firefox.
 
 ## Load in Chrome
 
@@ -56,14 +57,8 @@ includes a `browser_specific_settings.gecko` entry so Firefox accepts it.
 Temporary add-ons are removed when Firefox restarts; reload it the same way
 after restarting.
 
-## Test with local PDFs
+## Usage
 
-Use any two local PDF files from your machine.
-
-Suggested quick checks:
-
-1. Choose two text-based PDFs with minor wording differences
-2. Verify removed words are highlighted in red on the left
-3. Verify added words are highlighted in green on the right
-4. Verify next/previous change buttons navigate across pages
-5. Verify scanned/image-only PDFs show the scanned warning message
+1. Click the extension icon, then **Open viewer**
+2. Choose a PDF for the left pane and a PDF for the right pane
+3. Scroll, zoom, and navigate each PDF independently with the native viewer

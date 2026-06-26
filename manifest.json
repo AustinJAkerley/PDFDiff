@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "PDF Diff",
+  "name": "PDF Side by Side",
   "version": "0.1.0",
-  "description": "Compare two local PDFs and highlight text differences.",
+  "description": "Open two local PDFs side by side in one browser tab.",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "PDF Diff"
+    "default_title": "PDF Side by Side"
   },
   "browser_specific_settings": {
     "gecko": {

@@ -1,11 +1,11 @@
 export default function Popup({ onOpen }: { onOpen: () => void }) {
   return (
     <main className="popup-root">
-      <h1>PDF Diff</h1>
+      <h1>PDF Side by Side</h1>
       <button className="primary-button" onClick={onOpen}>
-        Open PDF Diff
+        Open viewer
       </button>
-      <p className="privacy-note">PDFs are processed locally in your browser and are never uploaded.</p>
+      <p className="privacy-note">PDFs are opened locally in your browser and are never uploaded.</p>
     </main>
   )
 }

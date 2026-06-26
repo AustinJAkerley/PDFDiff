@@ -1,6 +1,6 @@
 # Privacy Policy
 
-PDF Diff processes PDFs entirely within your browser.
+PDF Side by Side opens PDFs entirely within your browser.
 
 - PDFs are processed locally in your browser and are never uploaded.
 - PDF contents are not sent to any backend service.
