@@ -28,6 +28,26 @@ type PageEntry = {
   overlay: HTMLDivElement
 }
 
+// Render the given highlights into each page's overlay layer, replacing any
+// previously drawn boxes. Positions are percentage-based so they remain aligned
+// with the page at any render scale.
+function applyHighlights(pages: PageEntry[], highlights: Highlight[] | undefined) {
+  for (const entry of pages) {
+    entry.overlay.replaceChildren()
+  }
+  for (const hl of highlights ?? []) {
+    const entry = pages[hl.page - 1]
+    if (!entry) continue
+    const box = document.createElement('div')
+    box.className = hl.className ? `pdf-highlight ${hl.className}` : 'pdf-highlight'
+    box.style.left = `${hl.left * 100}%`
+    box.style.top = `${hl.top * 100}%`
+    box.style.width = `${hl.width * 100}%`
+    box.style.height = `${hl.height * 100}%`
+    entry.overlay.appendChild(box)
+  }
+}
+
 export default function PdfViewer({ url, highlights, ariaLabel }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
@@ -78,23 +98,7 @@ export default function PdfViewer({ url, highlights, ariaLabel }: Props) {
       }
     }
 
-    const applyHighlights = () => {
-      const items = highlightsRef.current ?? []
-      for (const entry of pagesRef.current) {
-        entry.overlay.replaceChildren()
-      }
-      for (const hl of items) {
-        const entry = pagesRef.current[hl.page - 1]
-        if (!entry) continue
-        const box = document.createElement('div')
-        box.className = hl.className ? `pdf-highlight ${hl.className}` : 'pdf-highlight'
-        box.style.left = `${hl.left * 100}%`
-        box.style.top = `${hl.top * 100}%`
-        box.style.width = `${hl.width * 100}%`
-        box.style.height = `${hl.height * 100}%`
-        entry.overlay.appendChild(box)
-      }
-    }
+    const applyHighlightsNow = () => applyHighlights(pagesRef.current, highlightsRef.current)
 
     const load = async () => {
       try {
@@ -118,7 +122,7 @@ export default function PdfViewer({ url, highlights, ariaLabel }: Props) {
           pagesRef.current.push(entry)
           await renderPage(entry)
         }
-        if (!cancelled) applyHighlights()
+        if (!cancelled) applyHighlightsNow()
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to render PDF.')
@@ -138,7 +142,7 @@ export default function PdfViewer({ url, highlights, ariaLabel }: Props) {
           for (const entry of pagesRef.current) {
             await renderPage(entry)
           }
-          applyHighlights()
+          applyHighlightsNow()
         })()
       }, 150)
     })
@@ -158,21 +162,7 @@ export default function PdfViewer({ url, highlights, ariaLabel }: Props) {
   // Re-apply highlights when they change without reloading the document.
   useEffect(() => {
     highlightsRef.current = highlights
-    const items = highlights ?? []
-    for (const entry of pagesRef.current) {
-      entry.overlay.replaceChildren()
-    }
-    for (const hl of items) {
-      const entry = pagesRef.current[hl.page - 1]
-      if (!entry) continue
-      const box = document.createElement('div')
-      box.className = hl.className ? `pdf-highlight ${hl.className}` : 'pdf-highlight'
-      box.style.left = `${hl.left * 100}%`
-      box.style.top = `${hl.top * 100}%`
-      box.style.width = `${hl.width * 100}%`
-      box.style.height = `${hl.height * 100}%`
-      entry.overlay.appendChild(box)
-    }
+    applyHighlights(pagesRef.current, highlights)
   }, [highlights])
 
   return (

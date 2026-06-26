@@ -1,7 +1,7 @@
 import { cpSync, createReadStream, existsSync, mkdirSync, statSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import type { ServerResponse } from 'node:http'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, join, resolve, sep } from 'node:path'
 import type { Plugin } from 'vite'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -49,9 +49,11 @@ function servePdfjsAssets(): Plugin {
     configureServer(server) {
       server.middlewares.use('/pdfjs', (req, res: ServerResponse, next) => {
         const rel = decodeURIComponent((req.url ?? '').split('?')[0]).replace(/^\/+/, '')
-        const target = join(pdfjsRoot, rel)
-        // Prevent path traversal outside the pdfjs package.
-        if (!target.startsWith(pdfjsRoot) || !existsSync(target) || statSync(target).isDirectory()) {
+        // Resolve and confirm the target stays inside the pdfjs package root to
+        // prevent path traversal (e.g. `../../etc/passwd`).
+        const target = resolve(pdfjsRoot, rel)
+        const inside = target === pdfjsRoot || target.startsWith(pdfjsRoot + sep)
+        if (!inside || !existsSync(target) || statSync(target).isDirectory()) {
           next()
           return
         }
