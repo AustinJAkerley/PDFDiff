@@ -21,7 +21,9 @@ const CLASS_ADDED = 'pdf-highlight--added'
 const SAME_LINE_TOLERANCE = 0.5
 
 // Minimum intersection-over-union for two images to be considered "the same"
-// image across the two documents (and therefore unchanged).
+// image across the two documents (and therefore unchanged). This is a
+// position/size match only - content is not compared - so an image swapped for
+// a different one at the same spot is treated as unchanged.
 const IMAGE_MATCH_IOU = 0.5
 
 /**

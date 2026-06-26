@@ -21,6 +21,8 @@ const IMAGE_OPS = new Set<number>([
 ])
 
 // Ignore hairline images (rules, 1px spacers) that would only add diff noise.
+// 0.005 of a page edge is ~3px on a letter-size page rendered at scale 1
+// (~612×792), small enough to keep logos but drop decorative rules.
 const MIN_IMAGE_FRACTION = 0.005
 
 type Matrix = number[]
