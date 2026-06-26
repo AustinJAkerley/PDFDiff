@@ -171,6 +171,12 @@ body {
   outline: 1px solid rgba(220, 38, 38, 0.75);
 }
 
+/* Orange: text changed in place, shown on both sides. */
+.pdf-highlight.pdf-highlight--modified {
+  background: rgba(250, 204, 21, 0.16);
+  outline: 1px solid rgba(202, 138, 4, 0.75);
+}
+
 .diff-legend {
   display: flex;
   flex-wrap: wrap;
@@ -202,6 +208,11 @@ body {
 .diff-swatch--removed {
   background: rgba(239, 68, 68, 0.14);
   outline: 1px solid rgba(220, 38, 38, 0.75);
+}
+
+.diff-swatch--modified {
+  background: rgba(250, 204, 21, 0.16);
+  outline: 1px solid rgba(202, 138, 4, 0.75);
 }
 
 .diff-legend-status {

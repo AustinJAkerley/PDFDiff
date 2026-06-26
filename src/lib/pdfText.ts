@@ -26,7 +26,10 @@ type TextItemLike = {
 // Fraction of a glyph's height that sits above the text baseline. The remainder
 // (1 - ASCENT_RATIO) accounts for descenders below the baseline. Used to anchor
 // highlight boxes snugly over the visible glyphs instead of floating above them.
-const ASCENT_RATIO = 0.8
+// pdf.js reports `item.height` as the full font em, which is taller than the
+// visible cap/ascender height; using the full em as the ascent left the box
+// floating slightly above the text, so we anchor the top near the cap height.
+const ASCENT_RATIO = 0.7
 
 function isTextItem(item: unknown): item is TextItemLike {
   return typeof (item as TextItemLike)?.str === 'string' && Array.isArray((item as TextItemLike).transform)
