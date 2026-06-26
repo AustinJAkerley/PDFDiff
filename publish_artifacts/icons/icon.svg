@@ -1,0 +1,22 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2F6FED"/>
+      <stop offset="1" stop-color="#1B4DB5"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="28" fill="url(#bg)"/>
+  <!-- back page (original) -->
+  <rect x="18" y="26" width="54" height="72" rx="8" fill="#000000" opacity="0.18"/>
+  <rect x="16" y="24" width="54" height="72" rx="8" fill="#FFFFFF"/>
+  <!-- front page (new) -->
+  <rect x="58" y="32" width="54" height="72" rx="8" fill="#000000" opacity="0.18"/>
+  <rect x="56" y="30" width="54" height="72" rx="8" fill="#FFFFFF"/>
+  <path d="M96 30 H110 V44 Z" fill="#E9EDF2"/>
+  <!-- text lines on front page -->
+  <rect x="66" y="44" width="34" height="4" rx="2" fill="#9AA5B1"/>
+  <rect x="66" y="54" width="28" height="4" rx="2" fill="#9AA5B1"/>
+  <rect x="66" y="63" width="30" height="7" rx="3" fill="#E5484D"/>
+  <rect x="66" y="74" width="26" height="4" rx="2" fill="#9AA5B1"/>
+  <rect x="66" y="83" width="34" height="7" rx="3" fill="#30A46C"/>
+</svg>
