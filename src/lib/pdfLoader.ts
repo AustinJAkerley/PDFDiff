@@ -1,3 +1,8 @@
+// Install the Map/WeakMap getOrInsertComputed polyfill before pdf.js loads, so
+// page.render works on browsers that lack the TC39 proposal (Firefox 115,
+// older Chrome, iOS Safari). The worker gets the same polyfill prepended at
+// build time (see vite.config.ts).
+import './mapGetOrInsertPolyfill.js'
 import * as pdfjs from 'pdfjs-dist'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 
