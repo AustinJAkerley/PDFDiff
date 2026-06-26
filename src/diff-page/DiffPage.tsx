@@ -1,9 +1,70 @@
 import { useMemo, useRef, useState } from 'react'
 import { buildDiff, type DiffResult } from '../lib/diffEngine'
+import {
+  classifyPdf,
+  getClassificationBadgeLabel,
+  getDiffStrategy,
+  type PdfClassificationResult,
+} from '../lib/pdfClassify'
 import { extractPdfText, type ExtractedPdf } from '../lib/pdfExtract'
 import { renderPdfWithHighlights } from '../lib/pdfRender'
 
 type Side = 'left' | 'right'
+
+const buildBadgeMap = (classification: PdfClassificationResult | null): Map<number, string> => {
+  const badges = new Map<number, string>()
+  if (classification) {
+    for (const page of classification.pages) {
+      badges.set(page.pageNumber, getClassificationBadgeLabel(page.type))
+    }
+  }
+  return badges
+}
+
+function ClassificationBadge({ label }: { label: string }) {
+  const modifier = label.toLowerCase().replace(/[^a-z]+/g, '-')
+  return <span className={`classification-badge badge-${modifier}`}>{label}</span>
+}
+
+function ClassificationDebug({ title, classification }: { title: string; classification: PdfClassificationResult }) {
+  return (
+    <details className="classification-debug">
+      <summary>
+        Debug signals — {title} (document: {getClassificationBadgeLabel(classification.documentType)})
+      </summary>
+      <table className="classification-debug-table">
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>Type</th>
+            <th>Strategy</th>
+            <th>Text items</th>
+            <th>Words</th>
+            <th>Images</th>
+            <th>Image coverage</th>
+            <th>Vectors</th>
+            <th>Confidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          {classification.pages.map((page) => (
+            <tr key={page.pageNumber}>
+              <td>{page.pageNumber}</td>
+              <td>{page.type}</td>
+              <td>{getDiffStrategy(page.type)}</td>
+              <td>{page.signals.textItemCount}</td>
+              <td>{page.signals.wordCount}</td>
+              <td>{page.signals.imageCount ?? 0}</td>
+              <td>{((page.signals.estimatedImageCoverage ?? 0) * 100).toFixed(0)}%</td>
+              <td>{page.signals.vectorObjectCount ?? 0}</td>
+              <td>{(page.signals.confidence * 100).toFixed(0)}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </details>
+  )
+}
 
 function UploadZone({ label, onFileSelected }: { label: string; onFileSelected: (file: File) => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -53,6 +114,8 @@ export default function DiffPage() {
   const [newFile, setNewFile] = useState<File | null>(null)
   const [originalText, setOriginalText] = useState<ExtractedPdf | null>(null)
   const [newText, setNewText] = useState<ExtractedPdf | null>(null)
+  const [originalClassification, setOriginalClassification] = useState<PdfClassificationResult | null>(null)
+  const [newClassification, setNewClassification] = useState<PdfClassificationResult | null>(null)
   const [diffResult, setDiffResult] = useState<DiffResult | null>(null)
   const [activeChangeIndex, setActiveChangeIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
@@ -73,11 +136,18 @@ export default function DiffPage() {
 
     let originalExtraction: ExtractedPdf
     let newExtraction: ExtractedPdf
+    let originalClass: PdfClassificationResult
+    let newClass: PdfClassificationResult
 
     try {
-      const extractions = await Promise.all([extractPdfText(left), extractPdfText(right)])
+      const [extractions, classifications] = await Promise.all([
+        Promise.all([extractPdfText(left), extractPdfText(right)]),
+        Promise.all([classifyPdf(left), classifyPdf(right)]),
+      ])
       originalExtraction = extractions[0]
       newExtraction = extractions[1]
+      originalClass = classifications[0]
+      newClass = classifications[1]
     } catch {
       setError('Unable to read one or both PDFs. Please try different files.')
       setIsLoading(false)
@@ -87,6 +157,8 @@ export default function DiffPage() {
     const diff = buildDiff(originalExtraction.pages, newExtraction.pages)
     setOriginalText(originalExtraction)
     setNewText(newExtraction)
+    setOriginalClassification(originalClass)
+    setNewClassification(newClass)
     setDiffResult(diff)
 
     // Rendering is best-effort: a failure here (for example an unsupported
@@ -99,6 +171,7 @@ export default function DiffPage() {
           textPages: originalExtraction.pages,
           highlightMap: diff.removedByPage,
           mode: 'removed',
+          pageBadges: buildBadgeMap(originalClass),
         }),
         renderPdfWithHighlights({
           file: right,
@@ -106,6 +179,7 @@ export default function DiffPage() {
           textPages: newExtraction.pages,
           highlightMap: diff.addedByPage,
           mode: 'added',
+          pageBadges: buildBadgeMap(newClass),
         }),
       ])
 
@@ -146,6 +220,8 @@ export default function DiffPage() {
     setError(null)
     setOriginalText(null)
     setNewText(null)
+    setOriginalClassification(null)
+    setNewClassification(null)
     setDiffResult(null)
     setActiveChangeIndex(0)
 
@@ -198,13 +274,22 @@ export default function DiffPage() {
       {originalText && !originalText.hasSelectableText ? <p className="scan-warning">No selectable text found in the original PDF. It may be scanned.</p> : null}
       {newText && !newText.hasSelectableText ? <p className="scan-warning">No selectable text found in the new PDF. It may be scanned.</p> : null}
 
+      {originalClassification ? <ClassificationDebug title="Original PDF" classification={originalClassification} /> : null}
+      {newClassification ? <ClassificationDebug title="New PDF" classification={newClassification} /> : null}
+
       <section className="viewer-grid">
         <article>
-          <h2>Original PDF</h2>
+          <h2>
+            Original PDF
+            {originalClassification ? <ClassificationBadge label={getClassificationBadgeLabel(originalClassification.documentType)} /> : null}
+          </h2>
           <div ref={leftContainerRef} className="pdf-container" />
         </article>
         <article>
-          <h2>New PDF</h2>
+          <h2>
+            New PDF
+            {newClassification ? <ClassificationBadge label={getClassificationBadgeLabel(newClassification.documentType)} /> : null}
+          </h2>
           <div ref={rightContainerRef} className="pdf-container" />
         </article>
       </section>

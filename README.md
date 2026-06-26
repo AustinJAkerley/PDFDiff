@@ -8,6 +8,8 @@ PDF Diff is a Manifest V3 browser extension that compares two local PDFs in-brow
 - Side-by-side PDF rendering for original and new documents
 - Local text extraction via `pdf.js`
 - Local text diffing via `diff` (jsdiff)
+- PDF classification layer that labels each document and page as **Text-based**, **Scanned**, **Image-heavy**, **Mixed**, or **Visual fallback** before diffing, and routes the diff accordingly (no OCR yet)
+- Per-page debug panel showing the classification signals (text items, words, images, estimated image coverage, vector objects, confidence)
 - Red highlights for removed text and green highlights for added text
 - Change navigator with total count, page number, and next/previous controls
 - Scanned/image-only fallback warning: **No selectable text found. This PDF may be scanned.**

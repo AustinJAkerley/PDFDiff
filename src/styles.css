@@ -140,6 +140,70 @@ body {
   color: #64748b;
 }
 
+.classification-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: middle;
+  color: #1f2937;
+  background: #e2e8f0;
+}
+
+.badge-text-based {
+  color: #065f46;
+  background: #d1fae5;
+}
+
+.badge-scanned {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.badge-image-heavy {
+  color: #5b21b6;
+  background: #ede9fe;
+}
+
+.badge-mixed {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+.badge-visual-fallback {
+  color: #334155;
+  background: #e2e8f0;
+}
+
+.classification-debug {
+  margin: 0.75rem 0;
+  border-radius: 0.6rem;
+  background: #fff;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.classification-debug summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.classification-debug-table {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-collapse: collapse;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.classification-debug-table th,
+.classification-debug-table td {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
 @media (max-width: 1024px) {
   .upload-grid,
   .viewer-grid {

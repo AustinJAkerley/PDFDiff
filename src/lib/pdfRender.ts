@@ -16,6 +16,7 @@ export type RenderOptions = {
   textPages: RenderTextPage[]
   highlightMap: Map<number, Set<string>>
   mode: RenderMode
+  pageBadges?: Map<number, string>
 }
 
 const TOKENS_PER_LINE = 20
@@ -67,7 +68,7 @@ const appendTextBlock = (pageSection: HTMLElement, tokens: string[], highlighted
   pageSection.append(textBlock)
 }
 
-export async function renderPdfWithHighlights({ file, container, textPages, highlightMap, mode }: RenderOptions): Promise<RenderResult> {
+export async function renderPdfWithHighlights({ file, container, textPages, highlightMap, mode, pageBadges }: RenderOptions): Promise<RenderResult> {
   container.innerHTML = ''
 
   let pdfDocument
@@ -93,6 +94,15 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
     const pageLabel = document.createElement('h3')
     pageLabel.className = 'pdf-page-label'
     pageLabel.textContent = `Page ${pageNumber}`
+
+    const badgeLabel = pageBadges?.get(pageNumber)
+    if (badgeLabel) {
+      const badge = document.createElement('span')
+      badge.className = `classification-badge badge-${badgeLabel.toLowerCase().replace(/[^a-z]+/g, '-')}`
+      badge.textContent = badgeLabel
+      pageLabel.append(' ', badge)
+    }
+
     pageSection.append(pageLabel)
 
     const tokens = textPages[pageNumber - 1]?.tokens ?? []
