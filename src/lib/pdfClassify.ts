@@ -75,7 +75,7 @@ const VECTOR_OPS = new Set<number>([
 
 type Matrix = [number, number, number, number, number, number]
 
-const IDENTITY: Matrix = [1, 0, 0, 0, 1, 0]
+const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0]
 
 // Concatenate two affine transforms expressed as PDF matrices
 // [a, b, c, d, e, f]. Mirrors pdf.js `Util.transform`.
@@ -162,7 +162,7 @@ const classifyFromSignals = (raw: RawPageSignals): { type: PdfPageClassification
 
   // Very low extractable text behind a large image: a scanned page.
   if (wordCount <= LOW_WORD_COUNT && hasLargeImage) {
-    return { type: 'SCANNED_IMAGE', confidence: clampConfidence(0.6 + estimatedImageCoverage * 0.35) }
+    return { type: 'SCANNED_IMAGE', confidence: Math.min(1, 0.6 + estimatedImageCoverage * 0.35) }
   }
 
   // Meaningful text plus large image coverage: mixed content. A lot of text
@@ -192,8 +192,6 @@ const classifyFromSignals = (raw: RawPageSignals): { type: PdfPageClassification
   // Weak signals all round.
   return { type: 'UNKNOWN', confidence: 0.3 }
 }
-
-const clampConfidence = (value: number): number => Math.max(0, Math.min(1, value))
 
 const summarizeDocumentType = (pages: PdfPageClassificationEntry[]): PdfPageClassification => {
   if (!pages.length) {
