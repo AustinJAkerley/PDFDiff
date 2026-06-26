@@ -21,6 +21,19 @@ export type RenderOptions = {
 
 const TOKENS_PER_LINE = 20
 
+// Resolve the visual kind for a box based on which document it sits in. An
+// in-place edit (`modified`) is shown relative to the page background: on the
+// left (original) document the edited words have been removed, so they read as
+// red; on the right (new) document they have been added, so they read as green.
+// This keeps the overlay colours intuitive (red = gone, green = new) instead of
+// painting every edit orange.
+const resolveKind = (kind: HighlightKind, side: 'left' | 'right'): HighlightKind => {
+  if (kind === 'modified') {
+    return side === 'left' ? 'removed' : 'added'
+  }
+  return kind
+}
+
 const HIGHLIGHT_CLASS: Record<HighlightKind, string> = {
   added: 'pdf-highlight-added',
   removed: 'pdf-highlight-removed',
@@ -48,7 +61,7 @@ export type RenderResult = {
   failedPages: number
 }
 
-const appendTextBlock = (pageSection: HTMLElement, tokens: string[], highlighted: Map<string, HighlightKind> | undefined) => {
+const appendTextBlock = (pageSection: HTMLElement, tokens: string[], highlighted: Map<string, HighlightKind> | undefined, side: 'left' | 'right') => {
   const textBlock = document.createElement('div')
   textBlock.className = 'pdf-page-text'
 
@@ -68,7 +81,7 @@ const appendTextBlock = (pageSection: HTMLElement, tokens: string[], highlighted
 
         const kind = highlighted?.get(token)
         if (kind) {
-          tokenEl.className = TEXT_CLASS[kind]
+          tokenEl.className = TEXT_CLASS[resolveKind(kind, side)]
         }
 
         line.append(tokenEl)
@@ -90,6 +103,7 @@ const appendItemHighlights = (
   item: TextItem,
   viewport: PageViewport,
   highlighted: Map<string, HighlightKind>,
+  side: 'left' | 'right',
 ) => {
   const str = item.str
   if (!str) {
@@ -124,7 +138,7 @@ const appendItemHighlights = (
     const wordWidth = itemWidth * widthFraction
 
     const box = document.createElement('span')
-    box.className = `pdf-highlight ${HIGHLIGHT_CLASS[kind]}`
+    box.className = `pdf-highlight ${HIGHLIGHT_CLASS[resolveKind(kind, side)]}`
     box.style.left = `${(100 * wordLeft) / viewport.width}%`
     box.style.top = `${(100 * itemTop) / viewport.height}%`
     box.style.width = `${(100 * wordWidth) / viewport.width}%`
@@ -212,7 +226,7 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
           const textContent = await page.getTextContent()
           for (const item of textContent.items) {
             if ('str' in item) {
-              appendItemHighlights(overlay, item, viewport, highlighted)
+              appendItemHighlights(overlay, item, viewport, highlighted, idPrefix)
             }
           }
 
@@ -238,7 +252,7 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
     // unavailable, so the diff is still visible without duplicating the
     // already-highlighted rendered page.
     if (!rendered) {
-      appendTextBlock(pageSection, tokens, highlighted)
+      appendTextBlock(pageSection, tokens, highlighted, idPrefix)
     }
 
     container.append(pageSection)
