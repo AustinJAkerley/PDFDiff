@@ -66,7 +66,17 @@ after restarting.
 
 ## Test with local PDFs
 
-Use any two local PDF files from your machine.
+Sample PDFs are committed under [`samples/`](samples/) so you can verify the
+extension without supplying your own files:
+
+- `samples/text-original.pdf` and `samples/text-modified.pdf` — two text-based
+  documents with several wording differences for the diff highlights and change
+  navigator.
+- `samples/scanned-no-text.pdf` — an image-only page that triggers the
+  scanned-PDF warning.
+
+See [`samples/README.md`](samples/README.md) for the expected result of each
+check. You can also use any two local PDF files from your machine.
 
 Suggested quick checks:
 
