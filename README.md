@@ -77,6 +77,12 @@ extension without supplying your own files:
 See [`samples/README.md`](samples/README.md) for the expected result of each
 check. You can also use any two local PDF files from your machine.
 
+For realistic, use-case-driven document pairs (résumé, W-2 tax form, real estate
+purchase contract, invoice, lease agreement, and employment offer), see
+[`examples/`](examples/). Each pair is named `<name>_old.pdf` / `<name>_new.pdf`
+with a few meaningful edits; [`examples/README.md`](examples/README.md) lists
+what changed in each pair.
+
 Suggested quick checks:
 
 1. Choose two PDFs with minor differences
