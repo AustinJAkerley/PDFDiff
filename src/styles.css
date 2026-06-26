@@ -107,6 +107,12 @@ body {
   border: 0;
 }
 
+.pdf-fallback {
+  margin: 0;
+  padding: 1rem;
+  color: #475569;
+}
+
 .pdf-dropzone {
   flex: 1 1 auto;
   display: flex;

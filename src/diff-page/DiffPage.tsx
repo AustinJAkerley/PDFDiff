@@ -39,7 +39,9 @@ function PdfPane({
       </div>
 
       {url ? (
-        <iframe className="pdf-frame" src={url} title={fileName ?? label} />
+        <object className="pdf-frame" data={url} type="application/pdf" aria-label={fileName ?? label}>
+          <p className="pdf-fallback">This PDF could not be displayed inline.</p>
+        </object>
       ) : (
         <div
           className="pdf-dropzone"
@@ -71,13 +73,21 @@ export default function DiffPage() {
   const [leftName, setLeftName] = useState<string | null>(null)
   const [rightName, setRightName] = useState<string | null>(null)
 
-  useEffect(() => () => {
-    if (leftUrl) URL.revokeObjectURL(leftUrl)
-  }, [leftUrl])
+  // Track the live object URLs so they can be revoked only when the page
+  // unmounts. Replacement cleanup is handled in handleFileSelected.
+  const urlsRef = useRef<{ left: string | null; right: string | null }>({ left: null, right: null })
 
-  useEffect(() => () => {
-    if (rightUrl) URL.revokeObjectURL(rightUrl)
-  }, [rightUrl])
+  useEffect(() => {
+    urlsRef.current = { left: leftUrl, right: rightUrl }
+  }, [leftUrl, rightUrl])
+
+  useEffect(
+    () => () => {
+      if (urlsRef.current.left) URL.revokeObjectURL(urlsRef.current.left)
+      if (urlsRef.current.right) URL.revokeObjectURL(urlsRef.current.right)
+    },
+    [],
+  )
 
   const handleFileSelected = (side: Side, file: File) => {
     const url = URL.createObjectURL(file)
