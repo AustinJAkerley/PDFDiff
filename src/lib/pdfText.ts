@@ -35,7 +35,7 @@ const ASCENT_RATIO = 0.7
 // so the highlight sits squarely on the glyphs. Even after anchoring at the cap
 // height the boxes read slightly high, so we drop them a fixed amount. Tweak
 // this single value to raise/lower all text boxes together.
-const VERTICAL_SHIFT_PX = 15
+const VERTICAL_SHIFT_PX = 7.5
 
 function isTextItem(item: unknown): item is TextItemLike {
   return typeof (item as TextItemLike)?.str === 'string' && Array.isArray((item as TextItemLike).transform)
