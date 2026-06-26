@@ -110,8 +110,8 @@ export default function DiffPage() {
         notices.push(
           browserSupport.message
             ? browserSupport.message
-            : 'The image comparison engine could not start, so the PDFs are shown without difference boxes. ' +
-                'This usually means your browser is out of date — please update to the latest version of Chrome and try again.',
+            : 'The image comparison engine (OpenCV) could not start, so the PDFs are shown without difference boxes and ' +
+                'are stamped “OPENCV DID NOT LOAD”. No visual comparison was performed.',
         )
       }
       if (diff.failedPages > 0) {
@@ -253,8 +253,8 @@ export default function DiffPage() {
             <p className="no-changes">No visual differences detected between the two PDFs.</p>
           ) : (
             <p className="render-notice">
-              The image comparison engine did not run, so no difference boxes could be drawn. Update your browser and
-              try again to see what changed between the two PDFs.
+              The image comparison engine (OpenCV) did not load, so no difference boxes could be drawn. The pages are
+              stamped “OPENCV DID NOT LOAD” to make this clear — no visual comparison was performed.
             </p>
           )}
 

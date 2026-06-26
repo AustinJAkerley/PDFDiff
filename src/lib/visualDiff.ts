@@ -202,6 +202,22 @@ const appendCanvas = (section: HTMLElement, rendered: RenderedPage): HTMLElement
   return wrap
 }
 
+// When OpenCV is unavailable the page image is shown but no difference boxes can
+// be drawn, which is easy to mistake for "no changes". Stamp a large, obvious
+// watermark across every page so it is unmistakable that the visual comparison
+// did not actually run.
+const appendOpenCvWatermark = (canvasWrap: HTMLElement) => {
+  const watermark = document.createElement('div')
+  watermark.className = 'pdf-page-watermark'
+
+  const label = document.createElement('span')
+  label.className = 'pdf-page-watermark-text'
+  label.textContent = 'OPENCV DID NOT LOAD'
+  watermark.append(label)
+
+  canvasWrap.append(watermark)
+}
+
 /**
  * Render both PDFs page by page as full page images and use OpenCV to compare
  * each pair of pages visually, boxing the regions of the page image that
@@ -262,6 +278,17 @@ export async function renderVisualDiff({ leftFile, rightFile, leftContainer, rig
     } catch (error) {
       failedPages += 1
       console.warn(`[pdfdiff] could not render page ${pageNumber} as an image:`, error)
+    }
+
+    // Without OpenCV no comparison happened; stamp each rendered page so the
+    // user cannot mistake the absence of boxes for "no differences".
+    if (!cv) {
+      if (leftWrap) {
+        appendOpenCvWatermark(leftWrap)
+      }
+      if (rightWrap) {
+        appendOpenCvWatermark(rightWrap)
+      }
     }
 
     let status: PageStatus = 'unchanged'
