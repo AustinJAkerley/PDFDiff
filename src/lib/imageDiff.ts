@@ -41,7 +41,8 @@ type GrayImage = {
 }
 
 // Convert canvas RGBA pixels to a single-channel grayscale image using the same
-// luma weights OpenCV's COLOR_RGBA2GRAY uses.
+// ITU-R BT.601 luma weights (0.299R + 0.587G + 0.114B) that OpenCV's
+// COLOR_RGBA2GRAY uses, so results match the previous OpenCV-based diff.
 const toGrayscale = (image: ImageData): GrayImage => {
   const { data, width, height } = image
   const gray = new Uint8ClampedArray(width * height)
