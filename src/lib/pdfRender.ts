@@ -1,10 +1,9 @@
 import { Util } from 'pdfjs-dist'
 import type { PageViewport } from 'pdfjs-dist'
 import type { TextItem } from 'pdfjs-dist/types/src/display/api'
+import type { HighlightKind, HighlightMap } from './diffEngine'
 import { loadPdfDocument } from './pdfLoader'
 import { createTokenRegex } from './tokenize'
-
-type RenderMode = 'added' | 'removed'
 
 export type RenderTextPage = {
   pageNumber: number
@@ -15,12 +14,24 @@ export type RenderOptions = {
   file: File
   container: HTMLElement
   textPages: RenderTextPage[]
-  highlightMap: Map<number, Set<string>>
-  mode: RenderMode
+  highlights: HighlightMap
+  idPrefix: 'left' | 'right'
   pageBadges?: Map<number, string>
 }
 
 const TOKENS_PER_LINE = 20
+
+const HIGHLIGHT_CLASS: Record<HighlightKind, string> = {
+  added: 'pdf-highlight-added',
+  removed: 'pdf-highlight-removed',
+  modified: 'pdf-highlight-modified',
+}
+
+const TEXT_CLASS: Record<HighlightKind, string> = {
+  added: 'change-added',
+  removed: 'change-removed',
+  modified: 'change-modified',
+}
 
 const chunk = (tokens: string[], size: number) => {
   const chunks: string[][] = []
@@ -37,7 +48,7 @@ export type RenderResult = {
   failedPages: number
 }
 
-const appendTextBlock = (pageSection: HTMLElement, tokens: string[], highlighted: Set<string> | undefined, mode: RenderMode) => {
+const appendTextBlock = (pageSection: HTMLElement, tokens: string[], highlighted: Map<string, HighlightKind> | undefined) => {
   const textBlock = document.createElement('div')
   textBlock.className = 'pdf-page-text'
 
@@ -55,8 +66,9 @@ const appendTextBlock = (pageSection: HTMLElement, tokens: string[], highlighted
         const tokenEl = document.createElement('span')
         tokenEl.textContent = `${token} `
 
-        if (highlighted?.has(token)) {
-          tokenEl.className = mode === 'added' ? 'change-added' : 'change-removed'
+        const kind = highlighted?.get(token)
+        if (kind) {
+          tokenEl.className = TEXT_CLASS[kind]
         }
 
         line.append(tokenEl)
@@ -77,8 +89,7 @@ const appendItemHighlights = (
   overlay: HTMLElement,
   item: TextItem,
   viewport: PageViewport,
-  highlighted: Set<string>,
-  mode: RenderMode,
+  highlighted: Map<string, HighlightKind>,
 ) => {
   const str = item.str
   if (!str) {
@@ -96,13 +107,12 @@ const appendItemHighlights = (
   const itemTop = tx[5] - fontHeight
   const itemWidth = item.width * viewport.scale
 
-  const highlightClass = mode === 'added' ? 'pdf-highlight-added' : 'pdf-highlight-removed'
-
   const tokenRegex = createTokenRegex()
   let match: RegExpExecArray | null
   while ((match = tokenRegex.exec(str)) !== null) {
     const token = match[0].toLowerCase()
-    if (!highlighted.has(token)) {
+    const kind = highlighted.get(token)
+    if (!kind) {
       continue
     }
 
@@ -114,7 +124,7 @@ const appendItemHighlights = (
     const wordWidth = itemWidth * widthFraction
 
     const box = document.createElement('span')
-    box.className = `pdf-highlight ${highlightClass}`
+    box.className = `pdf-highlight ${HIGHLIGHT_CLASS[kind]}`
     box.style.left = `${(100 * wordLeft) / viewport.width}%`
     box.style.top = `${(100 * itemTop) / viewport.height}%`
     box.style.width = `${(100 * wordWidth) / viewport.width}%`
@@ -123,7 +133,7 @@ const appendItemHighlights = (
   }
 }
 
-export async function renderPdfWithHighlights({ file, container, textPages, highlightMap, mode, pageBadges }: RenderOptions): Promise<RenderResult> {
+export async function renderPdfWithHighlights({ file, container, textPages, highlights, idPrefix, pageBadges }: RenderOptions): Promise<RenderResult> {
   container.innerHTML = ''
 
   let pdfDocument
@@ -143,7 +153,7 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
   for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
     const pageSection = document.createElement('section')
     pageSection.className = 'pdf-page'
-    pageSection.id = `${mode}-page-${pageNumber}`
+    pageSection.id = `${idPrefix}-page-${pageNumber}`
 
     const pageLabel = document.createElement('h3')
     pageLabel.className = 'pdf-page-label'
@@ -160,13 +170,13 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
     pageSection.append(pageLabel)
 
     const tokens = textPages[pageNumber - 1]?.tokens ?? []
-    const highlighted = highlightMap.get(pageNumber)
+    const highlighted = highlights.get(pageNumber)
 
     let rendered = false
 
     try {
       const page = await pdfDocument.getPage(pageNumber)
-      const viewport = page.getViewport({ scale: 1.2 })
+      const viewport = page.getViewport({ scale: 1.5 })
 
       const canvas = document.createElement('canvas')
       const context = canvas.getContext('2d')
@@ -192,7 +202,7 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
         const textContent = await page.getTextContent()
         for (const item of textContent.items) {
           if ('str' in item) {
-            appendItemHighlights(overlay, item, viewport, highlighted, mode)
+            appendItemHighlights(overlay, item, viewport, highlighted)
           }
         }
 
@@ -216,7 +226,7 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
     // unavailable, so the diff is still visible without duplicating the
     // already-highlighted rendered page.
     if (!rendered) {
-      appendTextBlock(pageSection, tokens, highlighted, mode)
+      appendTextBlock(pageSection, tokens, highlighted)
     }
 
     container.append(pageSection)

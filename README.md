@@ -1,17 +1,17 @@
 # PDF Diff
 
-PDF Diff is a Manifest V3 browser extension that compares two local PDFs in-browser and highlights textual differences. It runs in Chrome, Microsoft Edge, and Firefox.
+PDF Diff is a Manifest V3 browser extension that compares two local PDFs in-browser, renders them side by side, and boxes the differences directly on the rendered pages. It runs in Chrome, Microsoft Edge, and Firefox.
 
 ## Features
 
 - Popup action with **Open PDF Diff** button
-- Side-by-side PDF rendering for original and new documents
-- Local text extraction via `pdf.js`
-- Local text diffing via `diff` (jsdiff)
-- PDF classification layer that labels each document and page as **Text-based**, **Scanned**, **Image-heavy**, **Mixed**, or **Visual fallback** before diffing, and routes the diff accordingly (no OCR yet)
-- Per-page debug panel showing the classification signals (text items, words, images, estimated image coverage, vector objects, confidence)
-- Red highlights for removed text and green highlights for added text
-- Change navigator with total count, page number, and next/previous controls
+- Side-by-side **rendered** PDF pages (via `pdf.js`) with differences boxed directly on the page image
+- **Red** boxes for removed content on the original (left), **green** boxes for added content on the new PDF (right), and **orange** boxes on both sides for modified (edited) content
+- **Change classifier** that labels every change as an **Amount**, **ID / Account**, **Percentage**, **Date**, **Number**, or **Text** change — designed so an accountant or paralegal can see at a glance what changed on a revised tax form or contract (for example a dollar amount, an SSN/EIN, or an effective date)
+- Summary bar with modified/removed/added counts and a breakdown by change category
+- Change navigator listing every change with its page, category, and a `before → after` preview; clicking a change scrolls both documents to that page
+- Local text extraction via `pdf.js` and local diffing via `diff` (jsdiff); numeric values such as `$1,200.00`, `12/31/2024`, `45%`, and `123-45-6789` are kept as single tokens so amounts, dates, percentages, and identifiers diff and classify cleanly
+- PDF page-type classification layer (collapsible debug panel) that labels each document and page as **Text-based**, **Scanned**, **Image-heavy**, **Mixed**, or **Visual fallback**
 - Scanned/image-only fallback warning: **No selectable text found. This PDF may be scanned.**
 - No backend and no PDF upload
 
@@ -81,7 +81,9 @@ check. You can also use any two local PDF files from your machine.
 Suggested quick checks:
 
 1. Choose two text-based PDFs with minor wording differences
-2. Verify removed words are highlighted in red on the left
-3. Verify added words are highlighted in green on the right
-4. Verify next/previous change buttons navigate across pages
-5. Verify scanned/image-only PDFs show the scanned warning message
+2. Verify removed content is boxed in red on the left (original)
+3. Verify added content is boxed in green on the right (new)
+4. Verify edited content is boxed in orange on both sides (modified)
+5. Verify each change in the navigator shows a category badge (Amount, Date, etc.) and a `before → after` preview
+6. Verify next/previous change buttons navigate across pages
+7. Verify scanned/image-only PDFs show the scanned warning message

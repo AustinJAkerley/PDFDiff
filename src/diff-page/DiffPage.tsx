@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import { buildDiff, type DiffResult } from '../lib/diffEngine'
+import { buildDiff, type DiffChange, type DiffResult } from '../lib/diffEngine'
+import { getChangeCategoryLabel, type ChangeCategory } from '../lib/changeClassify'
 import {
   classifyPdf,
   getClassificationBadgeLabel,
@@ -10,6 +11,12 @@ import { extractPdfText, type ExtractedPdf } from '../lib/pdfExtract'
 import { renderPdfWithHighlights } from '../lib/pdfRender'
 
 type Side = 'left' | 'right'
+
+const KIND_LABEL: Record<DiffChange['type'], string> = {
+  added: 'Added',
+  removed: 'Removed',
+  modified: 'Modified',
+}
 
 const buildBadgeMap = (classification: PdfClassificationResult | null): Map<number, string> => {
   const badges = new Map<number, string>()
@@ -30,7 +37,7 @@ function ClassificationDebug({ title, classification }: { title: string; classif
   return (
     <details className="classification-debug">
       <summary>
-        Debug signals — {title} (document: {getClassificationBadgeLabel(classification.documentType)})
+        Page-type signals — {title} (document: {getClassificationBadgeLabel(classification.documentType)})
       </summary>
       <table className="classification-debug-table">
         <thead>
@@ -66,7 +73,7 @@ function ClassificationDebug({ title, classification }: { title: string; classif
   )
 }
 
-function UploadZone({ label, onFileSelected }: { label: string; onFileSelected: (file: File) => void }) {
+function UploadZone({ label, ready, onFileSelected }: { label: string; ready: boolean; onFileSelected: (file: File) => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const onDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -79,7 +86,7 @@ function UploadZone({ label, onFileSelected }: { label: string; onFileSelected: 
 
   return (
     <div
-      className="upload-zone"
+      className={`upload-zone${ready ? ' upload-zone-ready' : ''}`}
       onDragOver={(event) => event.preventDefault()}
       onDrop={onDrop}
       onClick={() => inputRef.current?.click()}
@@ -106,6 +113,57 @@ function UploadZone({ label, onFileSelected }: { label: string; onFileSelected: 
       <strong>{label}</strong>
       <p>Drag and drop a PDF here, or click to choose a file.</p>
     </div>
+  )
+}
+
+function SummaryBar({ summary }: { summary: DiffResult['summary'] }) {
+  const categories = (Object.entries(summary.byCategory) as Array<[ChangeCategory, number]>).filter(([, count]) => count > 0)
+
+  return (
+    <div className="summary-bar">
+      <div className="summary-counts">
+        <span className="summary-chip chip-modified">
+          <span className="chip-swatch" /> {summary.modified} modified
+        </span>
+        <span className="summary-chip chip-removed">
+          <span className="chip-swatch" /> {summary.removed} removed
+        </span>
+        <span className="summary-chip chip-added">
+          <span className="chip-swatch" /> {summary.added} added
+        </span>
+        <span className="summary-total">{summary.total} total changes</span>
+      </div>
+      {categories.length ? (
+        <div className="summary-categories">
+          <span className="summary-categories-label">By type:</span>
+          {categories.map(([category, count]) => (
+            <span key={category} className={`category-badge category-${category}`}>
+              {getChangeCategoryLabel(category)} · {count}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function ChangeRow({ change, active, onSelect }: { change: DiffChange; active: boolean; onSelect: () => void }) {
+  return (
+    <li>
+      <button type="button" className={`change-row change-row-${change.type}${active ? ' change-row-active' : ''}`} onClick={onSelect}>
+        <span className="change-row-meta">
+          <span className={`change-dot dot-${change.type}`} aria-hidden="true" />
+          <span className="change-kind">{KIND_LABEL[change.type]}</span>
+          <span className={`category-badge category-${change.category}`}>{getChangeCategoryLabel(change.category)}</span>
+          <span className="change-page">Page {change.pageNumber}</span>
+        </span>
+        <span className="change-row-detail">
+          {change.before ? <span className="change-before">{change.before}</span> : null}
+          {change.before && change.after ? <span className="change-arrow" aria-hidden="true">→</span> : null}
+          {change.after ? <span className="change-after">{change.after}</span> : null}
+        </span>
+      </button>
+    </li>
   )
 }
 
@@ -161,6 +219,7 @@ export default function DiffPage() {
     setOriginalClassification(originalClass)
     setNewClassification(newClass)
     setDiffResult(diff)
+    setActiveChangeIndex(0)
 
     // Rendering is best-effort: a failure here (for example an unsupported
     // image codec on a scanned PDF) must not hide the computed differences.
@@ -170,22 +229,22 @@ export default function DiffPage() {
           file: left,
           container: leftContainerRef.current,
           textPages: originalExtraction.pages,
-          highlightMap: diff.removedByPage,
-          mode: 'removed',
+          highlights: diff.leftHighlights,
+          idPrefix: 'left',
           pageBadges: buildBadgeMap(originalClass),
         }),
         renderPdfWithHighlights({
           file: right,
           container: rightContainerRef.current,
           textPages: newExtraction.pages,
-          highlightMap: diff.addedByPage,
-          mode: 'added',
+          highlights: diff.rightHighlights,
+          idPrefix: 'right',
           pageBadges: buildBadgeMap(newClass),
         }),
       ])
 
       if (leftResult.failedPages > 0 || rightResult.failedPages > 0) {
-        setRenderNotice('Some pages could not be displayed, but detected text differences are still shown.')
+        setRenderNotice('Some pages could not be displayed as images, but their detected differences are still shown.')
       }
     } catch {
       setRenderNotice('The PDF previews could not be displayed, but detected text differences are still shown.')
@@ -194,19 +253,21 @@ export default function DiffPage() {
     }
   }
 
-  const activeChange = useMemo(() => diffResult?.changes[activeChangeIndex] ?? null, [activeChangeIndex, diffResult])
+  const changes = useMemo(() => diffResult?.changes ?? [], [diffResult])
+  const activeChange = useMemo(() => changes[activeChangeIndex] ?? null, [activeChangeIndex, changes])
 
-  const navigate = (direction: 1 | -1) => {
-    if (!diffResult || !diffResult.changes.length) {
+  const scrollToPage = (pageNumber: number) => {
+    document.getElementById(`left-page-${pageNumber}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    document.getElementById(`right-page-${pageNumber}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const selectChange = (index: number) => {
+    if (!changes.length) {
       return
     }
-
-    const nextIndex = (activeChangeIndex + direction + diffResult.changes.length) % diffResult.changes.length
-    setActiveChangeIndex(nextIndex)
-
-    const pageNumber = diffResult.changes[nextIndex].pageNumber
-    document.getElementById(`removed-page-${pageNumber}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    document.getElementById(`added-page-${pageNumber}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const clamped = (index + changes.length) % changes.length
+    setActiveChangeIndex(clamped)
+    scrollToPage(changes[clamped].pageNumber)
   }
 
   const handleFileSelected = (side: Side, file: File) => {
@@ -241,53 +302,93 @@ export default function DiffPage() {
     <main className="diff-page-root">
       <header className="diff-header">
         <h1>PDF Diff</h1>
-        <p className="privacy-note">PDFs are processed locally in your browser and are never uploaded.</p>
+        <p className="privacy-note">
+          Compare two PDFs side by side. Everything is processed locally in your browser and never uploaded.
+        </p>
       </header>
 
       <section className="upload-grid">
-        <UploadZone label={originalFile ? `Original: ${originalFile.name}` : 'Original PDF'} onFileSelected={(file) => handleFileSelected('left', file)} />
-        <UploadZone label={newFile ? `New: ${newFile.name}` : 'New PDF'} onFileSelected={(file) => handleFileSelected('right', file)} />
-      </section>
-
-      <section className="change-panel" aria-live="polite">
-        <strong>Total changes: {diffResult?.changes.length ?? 0}</strong>
-        <div className="change-actions">
-          <button className="secondary-button" onClick={() => navigate(-1)} disabled={!diffResult?.changes.length}>
-            Previous change
-          </button>
-          <button className="secondary-button" onClick={() => navigate(1)} disabled={!diffResult?.changes.length}>
-            Next change
-          </button>
-        </div>
-        {activeChange ? (
-          <p>
-            Change {activeChangeIndex + 1}/{diffResult?.changes.length} • Page {activeChange.pageNumber} • {activeChange.type} • "{activeChange.text}"
-          </p>
-        ) : (
-          <p>No changes detected yet.</p>
-        )}
+        <UploadZone
+          label={originalFile ? `Original: ${originalFile.name}` : 'Original PDF'}
+          ready={Boolean(originalFile)}
+          onFileSelected={(file) => handleFileSelected('left', file)}
+        />
+        <UploadZone
+          label={newFile ? `New: ${newFile.name}` : 'New PDF'}
+          ready={Boolean(newFile)}
+          onFileSelected={(file) => handleFileSelected('right', file)}
+        />
       </section>
 
       {error ? <p className="error-message">{error}</p> : null}
       {renderNotice ? <p className="render-notice">{renderNotice}</p> : null}
-      {isLoading ? <p>Processing PDFs...</p> : null}
+      {isLoading ? <p className="loading-note">Processing PDFs…</p> : null}
 
       {originalText && !originalText.hasSelectableText ? <p className="scan-warning">No selectable text found in the original PDF. It may be scanned.</p> : null}
       {newText && !newText.hasSelectableText ? <p className="scan-warning">No selectable text found in the new PDF. It may be scanned.</p> : null}
+
+      {diffResult ? (
+        <section className="results">
+          <SummaryBar summary={diffResult.summary} />
+
+          <div className="legend">
+            <span className="legend-item">
+              <span className="legend-swatch swatch-removed" /> Removed (original)
+            </span>
+            <span className="legend-item">
+              <span className="legend-swatch swatch-modified" /> Modified (both)
+            </span>
+            <span className="legend-item">
+              <span className="legend-swatch swatch-added" /> Added (new)
+            </span>
+          </div>
+
+          {changes.length ? (
+            <div className="navigator">
+              <div className="navigator-controls">
+                <button className="secondary-button" onClick={() => selectChange(activeChangeIndex - 1)}>
+                  ← Previous
+                </button>
+                <span className="navigator-status">
+                  Change {activeChangeIndex + 1} of {changes.length}
+                </span>
+                <button className="secondary-button" onClick={() => selectChange(activeChangeIndex + 1)}>
+                  Next →
+                </button>
+              </div>
+              <ol className="change-list">
+                {changes.map((change, index) => (
+                  <ChangeRow key={change.id} change={change} active={index === activeChangeIndex} onSelect={() => selectChange(index)} />
+                ))}
+              </ol>
+            </div>
+          ) : (
+            <p className="no-changes">No differences detected between the two PDFs.</p>
+          )}
+
+          {activeChange ? (
+            <p className="active-change-note">
+              Showing page {activeChange.pageNumber}. {getChangeCategoryLabel(activeChange.category)} {KIND_LABEL[activeChange.type].toLowerCase()}.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       {originalClassification ? <ClassificationDebug title="Original PDF" classification={originalClassification} /> : null}
       {newClassification ? <ClassificationDebug title="New PDF" classification={newClassification} /> : null}
 
       <section className="viewer-grid">
-        <article>
-          <h2>
+        <article className="viewer-column">
+          <h2 className="viewer-heading">
+            <span className="viewer-dot dot-removed" aria-hidden="true" />
             Original PDF
             {originalClassification ? <ClassificationBadge label={getClassificationBadgeLabel(originalClassification.documentType)} /> : null}
           </h2>
           <div ref={leftContainerRef} className="pdf-container" />
         </article>
-        <article>
-          <h2>
+        <article className="viewer-column">
+          <h2 className="viewer-heading">
+            <span className="viewer-dot dot-added" aria-hidden="true" />
             New PDF
             {newClassification ? <ClassificationBadge label={getClassificationBadgeLabel(newClassification.documentType)} /> : null}
           </h2>

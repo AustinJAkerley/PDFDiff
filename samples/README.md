@@ -7,7 +7,7 @@ then choose the files below.
 | File | Purpose | Expected result |
 | --- | --- | --- |
 | `text-original.pdf` | Text-based "before" document. | Classified **Text-based**; renders side by side. |
-| `text-modified.pdf` | Text-based "after" document with several wording changes. | Diff against `text-original.pdf` reports multiple changes; removed words highlighted red on the left, added words green on the right. |
+| `text-modified.pdf` | Text-based "after" document with several wording changes. | Diff against `text-original.pdf` reports multiple changes; edited words boxed orange on both sides, removed words boxed red on the left, added words boxed green on the right. |
 | `scanned-no-text.pdf` | A full-page raster image with no selectable text (simulates a scan). | Classified **Scanned**; shows **"No selectable text found. This PDF may be scanned."** |
 
 ## Suggested checks
