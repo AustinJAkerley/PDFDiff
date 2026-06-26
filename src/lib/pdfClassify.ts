@@ -122,8 +122,9 @@ const collectPageSignals = async (
     .trim()
   const wordCount = (text.match(TOKEN_REGEX) ?? []).length
 
-  const [, , pageWidth, pageHeight] = page.view
-  const pageArea = Math.abs((pageWidth - page.view[0]) * (pageHeight - page.view[1]))
+  // page.view is [x1, y1, x2, y2] in PDF user-space units.
+  const [x1, y1, x2, y2] = page.view
+  const pageArea = Math.abs((x2 - x1) * (y2 - y1))
 
   let imageCount = 0
   let imageArea = 0
