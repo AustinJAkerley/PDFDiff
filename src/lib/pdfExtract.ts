@@ -1,6 +1,5 @@
 import { loadPdfDocument } from './pdfLoader'
-
-const TOKEN_REGEX = /[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)?/gu
+import { tokenize } from './tokenize'
 
 export type ExtractedPdfPage = {
   pageNumber: number
@@ -27,7 +26,7 @@ export async function extractPdfText(file: File): Promise<ExtractedPdf> {
       .replace(/\s+/g, ' ')
       .trim()
 
-    const tokens = (text.match(TOKEN_REGEX) ?? []).map((token) => token.toLowerCase())
+    const tokens = tokenize(text)
     pages.push({ pageNumber, text, tokens })
   }
 

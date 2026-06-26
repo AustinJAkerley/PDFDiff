@@ -2,6 +2,7 @@ import { Util } from 'pdfjs-dist'
 import type { PageViewport } from 'pdfjs-dist'
 import type { TextItem } from 'pdfjs-dist/types/src/display/api'
 import { loadPdfDocument } from './pdfLoader'
+import { createTokenRegex } from './tokenize'
 
 type RenderMode = 'added' | 'removed'
 
@@ -20,10 +21,6 @@ export type RenderOptions = {
 }
 
 const TOKENS_PER_LINE = 20
-
-// Mirrors the tokenizer in pdfExtract.ts so the words we locate on the page
-// match the tokens the diff engine compared.
-const TOKEN_REGEX = /[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)?/gu
 
 const chunk = (tokens: string[], size: number) => {
   const chunks: string[][] = []
@@ -101,9 +98,9 @@ const appendItemHighlights = (
 
   const highlightClass = mode === 'added' ? 'pdf-highlight-added' : 'pdf-highlight-removed'
 
-  TOKEN_REGEX.lastIndex = 0
+  const tokenRegex = createTokenRegex()
   let match: RegExpExecArray | null
-  while ((match = TOKEN_REGEX.exec(str)) !== null) {
+  while ((match = tokenRegex.exec(str)) !== null) {
     const token = match[0].toLowerCase()
     if (!highlighted.has(token)) {
       continue
