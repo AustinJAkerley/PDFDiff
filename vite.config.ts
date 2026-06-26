@@ -25,6 +25,14 @@ const copyPdfjsAssets = (): Plugin => ({
         cpSync(from, resolve(outDir, 'pdfjs', asset), { recursive: true })
       }
     }
+
+    // OpenCV.js is loaded at runtime as a classic script (see
+    // src/lib/opencvLoader.ts) rather than bundled, so copy the prebuilt file
+    // into the extension under `opencv/opencv.js`.
+    const openCvFrom = resolve(projectRoot, 'node_modules/@techstark/opencv-js/dist/opencv.js')
+    if (existsSync(openCvFrom)) {
+      cpSync(openCvFrom, resolve(outDir, 'opencv', 'opencv.js'))
+    }
   },
 })
 

@@ -6,17 +6,17 @@ then choose the files below.
 
 | File | Purpose | Expected result |
 | --- | --- | --- |
-| `text-original.pdf` | Text-based "before" document. | Classified **Text-based**; renders side by side. |
-| `text-modified.pdf` | Text-based "after" document with several wording changes. | Diff against `text-original.pdf` reports multiple changes; edited words boxed orange on both sides, removed words boxed red on the left, added words boxed green on the right. |
-| `scanned-no-text.pdf` | A full-page raster image with no selectable text (simulates a scan). | Classified **Scanned**; shows **"No selectable text found. This PDF may be scanned."** |
+| `text-original.pdf` | "Before" document. | Renders as a full page image side by side. |
+| `text-modified.pdf` | "After" document with several wording changes. | Visual diff against `text-original.pdf` reports multiple changed regions; each changed region is boxed on both the original (left) and the new PDF (right). |
+| `scanned-no-text.pdf` | A full-page raster image with no selectable text (simulates a scan). | Renders as a full page image and can be compared visually like any other page. |
 
 ## Suggested checks
 
-1. **Text diff** — choose `text-original.pdf` (Original) and `text-modified.pdf`
-   (New). Confirm the change navigator reports a non-zero total, and that
-   Next/Previous move between the highlighted changes.
-2. **Scanned fallback** — choose `scanned-no-text.pdf` for either side and
-   confirm the scanned-PDF warning appears while the page still renders.
+1. **Visual diff** — choose `text-original.pdf` (Original) and `text-modified.pdf`
+   (New). Confirm the whole pages render as images, that changed regions are
+   boxed on both sides, and that Next/Previous move between the changed pages.
+2. **Image-only page** — choose `scanned-no-text.pdf` for either side and
+   confirm the page still renders as an image.
 
 The files are intentionally tiny and contain no embedded fonts beyond the
 standard 14, so they also verify that pdf.js loads its external standard-font

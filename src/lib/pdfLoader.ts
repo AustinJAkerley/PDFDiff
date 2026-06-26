@@ -2,11 +2,15 @@ import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import pdfWorkerUrl from './pdfWorker?worker&url'
 import { installUint8ArrayBase64HexPolyfill } from './uint8ArrayBase64Hex'
+import { installMapGetOrInsertPolyfill } from './mapGetOrInsert'
 
 // pdf.js v6 uses the TC39 Uint8Array hex/base64 methods on both the main thread
 // and the worker. Polyfill the main thread here and use a custom worker entry
 // (src/lib/pdfWorker.ts) that polyfills the worker context before pdf.js runs.
 installUint8ArrayBase64HexPolyfill()
+// pdf.js v6 also uses Map/WeakMap getOrInsert(Computed) while rendering pages;
+// without it page.render throws and the page cannot be shown as an image.
+installMapGetOrInsertPolyfill()
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 

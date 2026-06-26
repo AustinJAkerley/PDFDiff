@@ -5,7 +5,9 @@
 // function" and breaks PDF loading. Install the polyfill before loading the
 // real worker so the methods exist by the time a document is parsed.
 import { installUint8ArrayBase64HexPolyfill } from './uint8ArrayBase64Hex'
+import { installMapGetOrInsertPolyfill } from './mapGetOrInsert'
 
 installUint8ArrayBase64HexPolyfill()
+installMapGetOrInsertPolyfill()
 
 import 'pdfjs-dist/build/pdf.worker.mjs'
