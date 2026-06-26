@@ -430,6 +430,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  /* Give each side its own scroll area so the two PDFs can be scrolled and
+     compared independently, while keeping both panes visible side by side. */
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 0.25rem;
+  border-radius: 0.6rem;
+  background: #e2e8f0;
 }
 
 .pdf-page {

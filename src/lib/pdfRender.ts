@@ -139,7 +139,8 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
   let pdfDocument
   try {
     pdfDocument = await loadPdfDocument(new Uint8Array(await file.arrayBuffer()))
-  } catch {
+  } catch (loadError) {
+    console.warn('[pdfdiff] could not load PDF for rendering:', loadError)
     const failure = document.createElement('p')
     failure.className = 'page-empty-text'
     failure.textContent = 'This PDF could not be displayed.'
@@ -195,27 +196,38 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
       canvasWrap.className = 'pdf-page-canvas-wrap'
       canvasWrap.append(canvas)
 
-      if (highlighted?.size) {
-        const overlay = document.createElement('div')
-        overlay.className = 'pdf-page-highlight-layer'
-
-        const textContent = await page.getTextContent()
-        for (const item of textContent.items) {
-          if ('str' in item) {
-            appendItemHighlights(overlay, item, viewport, highlighted)
-          }
-        }
-
-        canvasWrap.append(overlay)
-      }
-
+      // The page image rendered successfully: commit it to the DOM right away.
+      // Everything below (highlight overlay) is best-effort decoration and must
+      // never be able to discard an already-rendered page — otherwise a PDF
+      // that Chrome can display perfectly would fall back to the text dump.
       pageSection.append(canvasWrap)
       renderedPages += 1
       rendered = true
-    } catch {
+
+      if (highlighted?.size) {
+        try {
+          const overlay = document.createElement('div')
+          overlay.className = 'pdf-page-highlight-layer'
+
+          const textContent = await page.getTextContent()
+          for (const item of textContent.items) {
+            if ('str' in item) {
+              appendItemHighlights(overlay, item, viewport, highlighted)
+            }
+          }
+
+          canvasWrap.append(overlay)
+        } catch (overlayError) {
+          // Losing the diff boxes for a page is acceptable; losing the page
+          // image is not. Keep the rendered canvas and just log the problem.
+          console.warn(`[pdfdiff] could not overlay diff highlights on page ${pageNumber}:`, overlayError)
+        }
+      }
+    } catch (renderError) {
       // A single page may fail to render (for example an unsupported image
       // codec) without preventing the rest of the document from displaying.
       failedPages += 1
+      console.warn(`[pdfdiff] could not render page ${pageNumber} as an image:`, renderError)
       const failure = document.createElement('p')
       failure.className = 'page-empty-text'
       failure.textContent = 'This page could not be displayed.'
