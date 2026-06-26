@@ -172,6 +172,28 @@ export default function DiffPage() {
 
   return (
     <main className="diff-page-root">
+      {changedPages.length ? (
+        <div className="change-nav-bar">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => selectChange(activeChangeIndex - 1)}
+          >
+            ← Previous
+          </button>
+          <span className="navigator-status">
+            Change {activeChangeIndex + 1} of {changedPages.length}
+          </span>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => selectChange(activeChangeIndex + 1)}
+          >
+            Next →
+          </button>
+        </div>
+      ) : null}
+
       <header className="diff-header">
         <h1>PDF Diff</h1>
         <p className="privacy-note">
