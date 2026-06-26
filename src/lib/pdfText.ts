@@ -31,6 +31,12 @@ type TextItemLike = {
 // floating slightly above the text, so we anchor the top near the cap height.
 const ASCENT_RATIO = 0.7
 
+// Extra downward nudge (in scale-1 / device pixels) applied to every box's top
+// so the highlight sits squarely on the glyphs. Even after anchoring at the cap
+// height the boxes read slightly high, so we drop them a fixed amount. Tweak
+// this single value to raise/lower all text boxes together.
+const VERTICAL_SHIFT_PX = 15
+
 function isTextItem(item: unknown): item is TextItemLike {
   return typeof (item as TextItemLike)?.str === 'string' && Array.isArray((item as TextItemLike).transform)
 }
@@ -67,7 +73,7 @@ function splitItemIntoTokens(
   // `baseline - height` left a gap of empty space above the text and made the
   // box look too high, so split `height` into an ascent above and a descent
   // below the baseline to sit snugly over the glyphs.
-  const top = baselineY - height * ASCENT_RATIO
+  const top = baselineY - height * ASCENT_RATIO + VERTICAL_SHIFT_PX
   const totalWidth = item.width
 
   // Distribute the run width across characters so each word gets a slice.
