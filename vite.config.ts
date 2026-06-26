@@ -30,6 +30,12 @@ const copyPdfjsAssets = (): Plugin => ({
 
 export default defineConfig({
   plugins: [react(), copyPdfjsAssets()],
+  // pdf.js instantiates its worker with `{ type: 'module' }`, so the bundled
+  // worker (src/lib/pdfWorker.ts, referenced via `?worker&url`) must be emitted
+  // as an ES module rather than the default IIFE format.
+  worker: {
+    format: 'es',
+  },
   build: {
     rollupOptions: {
       input: {

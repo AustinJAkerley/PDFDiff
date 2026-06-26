@@ -1,6 +1,12 @@
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
+import pdfWorkerUrl from './pdfWorker?worker&url'
+import { installUint8ArrayBase64HexPolyfill } from './uint8ArrayBase64Hex'
+
+// pdf.js v6 uses the TC39 Uint8Array hex/base64 methods on both the main thread
+// and the worker. Polyfill the main thread here and use a custom worker entry
+// (src/lib/pdfWorker.ts) that polyfills the worker context before pdf.js runs.
+installUint8ArrayBase64HexPolyfill()
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
