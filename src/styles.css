@@ -159,6 +159,74 @@ body {
   outline: 1px solid rgba(202, 138, 4, 0.8);
 }
 
+/* Green: content added on the right. */
+.pdf-highlight.pdf-highlight--added {
+  background: rgba(34, 197, 94, 0.25);
+  outline: 1.5px solid rgba(22, 163, 74, 0.9);
+}
+
+/* Red: content removed (boxed on the left, marked on the right). */
+.pdf-highlight.pdf-highlight--removed {
+  background: rgba(239, 68, 68, 0.25);
+  outline: 1.5px solid rgba(220, 38, 38, 0.9);
+}
+
+/* Orange: content modified in place (boxed on both sides). */
+.pdf-highlight.pdf-highlight--modified {
+  background: rgba(249, 115, 22, 0.25);
+  outline: 1.5px solid rgba(234, 88, 12, 0.9);
+}
+
+/* Thin red marker on the right showing where text was removed. */
+.pdf-highlight.pdf-highlight--removed-marker {
+  background: rgba(239, 68, 68, 0.6);
+  outline: none;
+  border-radius: 1px;
+}
+
+.diff-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #334155;
+}
+
+.diff-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.diff-swatch {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 2px;
+}
+
+.diff-swatch--added {
+  background: rgba(34, 197, 94, 0.25);
+  outline: 1.5px solid rgba(22, 163, 74, 0.9);
+}
+
+.diff-swatch--removed {
+  background: rgba(239, 68, 68, 0.25);
+  outline: 1.5px solid rgba(220, 38, 38, 0.9);
+}
+
+.diff-swatch--modified {
+  background: rgba(249, 115, 22, 0.25);
+  outline: 1.5px solid rgba(234, 88, 12, 0.9);
+}
+
+.diff-legend-status {
+  color: #64748b;
+  font-style: italic;
+}
+
 .pdf-fallback {
   margin: 0;
   padding: 1rem;

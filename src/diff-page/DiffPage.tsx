@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
-import PdfViewer from './PdfViewer'
+import { useEffect, useRef, useState } from 'react'
+import PdfViewer, { type Highlight } from './PdfViewer'
 import BrowserSupportWarning from '../components/BrowserSupportWarning'
+import { computeDiffHighlights } from '../lib/pdfDiff'
 
 type Side = 'left' | 'right'
 
@@ -8,11 +9,13 @@ function PdfPane({
   label,
   url,
   fileName,
+  highlights,
   onFileSelected,
 }: {
   label: string
   url: string | null
   fileName: string | null
+  highlights?: Highlight[]
   onFileSelected: (file: File) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -41,7 +44,7 @@ function PdfPane({
       </div>
 
       {url ? (
-        <PdfViewer url={url} ariaLabel={fileName ?? label} />
+        <PdfViewer url={url} highlights={highlights} ariaLabel={fileName ?? label} />
       ) : (
         <div
           className="pdf-dropzone"
@@ -72,6 +75,46 @@ export default function DiffPage() {
   const [rightUrl, setRightUrl] = useState<string | null>(null)
   const [leftName, setLeftName] = useState<string | null>(null)
   const [rightName, setRightName] = useState<string | null>(null)
+  const [leftHighlights, setLeftHighlights] = useState<Highlight[]>([])
+  const [rightHighlights, setRightHighlights] = useState<Highlight[]>([])
+  const [diffStatus, setDiffStatus] = useState<'idle' | 'computing' | 'ready' | 'error'>('idle')
+
+  // Recompute the diff whenever both PDFs are present (or one changes). The
+  // effect guards against races by ignoring results from a superseded run.
+  useEffect(() => {
+    let cancelled = false
+
+    const run = async () => {
+      if (!leftUrl || !rightUrl) {
+        if (cancelled) return
+        setLeftHighlights([])
+        setRightHighlights([])
+        setDiffStatus('idle')
+        return
+      }
+
+      setDiffStatus('computing')
+      setLeftHighlights([])
+      setRightHighlights([])
+
+      try {
+        const result = await computeDiffHighlights(leftUrl, rightUrl)
+        if (cancelled) return
+        setLeftHighlights(result.left)
+        setRightHighlights(result.right)
+        setDiffStatus('ready')
+      } catch {
+        if (cancelled) return
+        setDiffStatus('error')
+      }
+    }
+
+    void run()
+
+    return () => {
+      cancelled = true
+    }
+  }, [leftUrl, rightUrl])
 
   const sides: Record<
     Side,
@@ -107,6 +150,7 @@ export default function DiffPage() {
       <header className="viewer-header">
         <h1>PDF Side by Side</h1>
         <p className="privacy-note">PDFs are opened locally in your browser and are never uploaded.</p>
+        <DiffLegend status={diffStatus} />
       </header>
 
       <BrowserSupportWarning />
@@ -116,15 +160,44 @@ export default function DiffPage() {
           label="Left PDF"
           url={leftUrl}
           fileName={leftName}
+          highlights={leftHighlights}
           onFileSelected={(file) => handleFileSelected('left', file)}
         />
         <PdfPane
           label="Right PDF"
           url={rightUrl}
           fileName={rightName}
+          highlights={rightHighlights}
           onFileSelected={(file) => handleFileSelected('right', file)}
         />
       </div>
     </main>
+  )
+}
+
+// Explains the diff colors and surfaces the current diff computation status.
+function DiffLegend({ status }: { status: 'idle' | 'computing' | 'ready' | 'error' }) {
+  const message =
+    status === 'computing'
+      ? 'Comparing PDFs…'
+      : status === 'error'
+        ? 'Could not compare these PDFs.'
+        : status === 'idle'
+          ? 'Load a PDF on each side to see the differences.'
+          : null
+
+  return (
+    <div className="diff-legend" aria-live="polite">
+      <span className="diff-legend-item">
+        <span className="diff-swatch diff-swatch--added" /> Added
+      </span>
+      <span className="diff-legend-item">
+        <span className="diff-swatch diff-swatch--removed" /> Removed
+      </span>
+      <span className="diff-legend-item">
+        <span className="diff-swatch diff-swatch--modified" /> Modified
+      </span>
+      {message ? <span className="diff-legend-status">{message}</span> : null}
+    </div>
   )
 }
