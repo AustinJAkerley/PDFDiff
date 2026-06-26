@@ -136,23 +136,24 @@ export default function DiffPage() {
 
     let originalExtraction: ExtractedPdf
     let newExtraction: ExtractedPdf
-    let originalClass: PdfClassificationResult
-    let newClass: PdfClassificationResult
 
     try {
-      const [extractions, classifications] = await Promise.all([
-        Promise.all([extractPdfText(left), extractPdfText(right)]),
-        Promise.all([classifyPdf(left), classifyPdf(right)]),
-      ])
+      const extractions = await Promise.all([extractPdfText(left), extractPdfText(right)])
       originalExtraction = extractions[0]
       newExtraction = extractions[1]
-      originalClass = classifications[0]
-      newClass = classifications[1]
-    } catch {
-      setError('Unable to read one or both PDFs. Please try different files.')
+    } catch (extractionError) {
+      const detail = extractionError instanceof Error ? ` (${extractionError.message})` : ''
+      setError(`Unable to read one or both PDFs. Please try different files.${detail}`)
       setIsLoading(false)
       return
     }
+
+    // Classification is supplementary metadata for badges/routing and must never
+    // prevent the diff from being shown. Failures degrade to "no classification".
+    const [originalClass, newClass] = await Promise.all([
+      classifyPdf(left).catch(() => null),
+      classifyPdf(right).catch(() => null),
+    ])
 
     const diff = buildDiff(originalExtraction.pages, newExtraction.pages)
     setOriginalText(originalExtraction)

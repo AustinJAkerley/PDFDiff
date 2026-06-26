@@ -1,7 +1,4 @@
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
-
-GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+import { loadPdfDocument } from './pdfLoader'
 
 const TOKEN_REGEX = /[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)?/gu
 
@@ -18,8 +15,7 @@ export type ExtractedPdf = {
 }
 
 export async function extractPdfText(file: File): Promise<ExtractedPdf> {
-  const loadingTask = getDocument({ data: new Uint8Array(await file.arrayBuffer()) })
-  const document = await loadingTask.promise
+  const document = await loadPdfDocument(new Uint8Array(await file.arrayBuffer()))
   const pages: ExtractedPdfPage[] = []
 
   for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {

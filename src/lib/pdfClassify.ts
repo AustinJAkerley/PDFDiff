@@ -1,8 +1,6 @@
-import { getDocument, GlobalWorkerOptions, OPS } from 'pdfjs-dist'
+import { OPS } from 'pdfjs-dist'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
-
-GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+import { loadPdfDocument } from './pdfLoader'
 
 const TOKEN_REGEX = /[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)?/gu
 
@@ -107,11 +105,18 @@ const collectPageSignals = async (
 ): Promise<RawPageSignals> => {
   const page = await pdfDocument.getPage(pageNumber)
 
-  const textContent = await page.getTextContent()
-  const textItems = textContent.items.filter((item) => 'str' in item)
+  let textItems: Array<{ str?: string }>
+  try {
+    const textContent = await page.getTextContent()
+    textItems = textContent.items.filter((item) => 'str' in item) as Array<{ str?: string }>
+  } catch {
+    // Text extraction can fail (for example a missing font resource); treat the
+    // page as having no extractable text rather than aborting classification.
+    textItems = []
+  }
   const textItemCount = textItems.length
   const text = textItems
-    .map((item) => ('str' in item ? item.str : ''))
+    .map((item) => item.str ?? '')
     .join(' ')
     .replace(/\s+/g, ' ')
     .trim()
@@ -223,7 +228,14 @@ export async function classifyPdfDocument(pdfDocument: PDFDocumentProxy): Promis
   const pages: PdfPageClassificationEntry[] = []
 
   for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
-    const raw = await collectPageSignals(pdfDocument, pageNumber)
+    let raw: RawPageSignals
+    try {
+      raw = await collectPageSignals(pdfDocument, pageNumber)
+    } catch {
+      // A single unreadable page must not abort classification of the whole
+      // document; record empty signals so it falls through to UNKNOWN.
+      raw = { textItemCount: 0, wordCount: 0, imageCount: 0, estimatedImageCoverage: 0, vectorObjectCount: 0 }
+    }
     const { type, confidence } = classifyFromSignals(raw)
 
     pages.push({
@@ -247,8 +259,7 @@ export async function classifyPdfDocument(pdfDocument: PDFDocumentProxy): Promis
  * Classify a PDF file: the whole document plus each page.
  */
 export async function classifyPdf(file: File): Promise<PdfClassificationResult> {
-  const loadingTask = getDocument({ data: new Uint8Array(await file.arrayBuffer()) })
-  const pdfDocument = await loadingTask.promise
+  const pdfDocument = await loadPdfDocument(new Uint8Array(await file.arrayBuffer()))
   const result = await classifyPdfDocument(pdfDocument)
   logClassification(file.name, result)
   return result

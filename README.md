@@ -30,6 +30,12 @@ npm run build
 
 The build output is written to `dist/` and can be loaded as an unpacked extension in Chrome, Edge, or Firefox.
 
+The build also copies pdf.js's external resource bundles (CMaps, the standard 14
+fonts, and the WASM image decoders for scanned JBIG2/JPEG 2000 pages) into
+`dist/pdfjs/`. These are required so that PDFs using non-embedded standard
+fonts, CID/CJK fonts, or scanned images can be read and rendered. The extension
+manifest allows `wasm-unsafe-eval` so the image decoders can run.
+
 ## Load in Chrome
 
 1. Open `chrome://extensions`

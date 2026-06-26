@@ -1,7 +1,4 @@
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
-
-GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+import { loadPdfDocument } from './pdfLoader'
 
 type RenderMode = 'added' | 'removed'
 
@@ -73,8 +70,7 @@ export async function renderPdfWithHighlights({ file, container, textPages, high
 
   let pdfDocument
   try {
-    const loadingTask = getDocument({ data: new Uint8Array(await file.arrayBuffer()) })
-    pdfDocument = await loadingTask.promise
+    pdfDocument = await loadPdfDocument(new Uint8Array(await file.arrayBuffer()))
   } catch {
     const failure = document.createElement('p')
     failure.className = 'page-empty-text'
