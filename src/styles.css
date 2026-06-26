@@ -273,6 +273,11 @@ body {
   border-color: var(--color-modified);
 }
 
+.swatch-visual {
+  background: var(--color-modified-soft);
+  border-color: var(--color-modified);
+}
+
 /* ---- Change navigator ---- */
 
 .navigator {
@@ -485,6 +490,11 @@ body {
 .pdf-highlight-modified {
   background: var(--color-modified-soft);
   outline: 1.5px solid var(--color-modified);
+}
+
+.pdf-highlight-visual {
+  background: var(--color-modified-soft);
+  outline: 2px solid var(--color-modified);
 }
 
 .pdf-page-label {
