@@ -1,15 +1,7 @@
-import type { CV, Mat } from '@techstark/opencv-js'
-import { loadOpenCv } from './opencvLoader'
+import { computeDiffBoxes, type DiffBox, type ImageDiffOptions } from './imageDiff'
 import { loadPdfDocument } from './pdfLoader'
 
-// A difference region expressed as fractions (0..1) of the page so the same box
-// can be overlaid on a canvas that is displayed at a responsive `width: 100%`.
-export type DiffBox = {
-  left: number
-  top: number
-  width: number
-  height: number
-}
+export type { DiffBox } from './imageDiff'
 
 export type PageStatus = 'changed' | 'unchanged' | 'added' | 'removed'
 
@@ -24,7 +16,6 @@ export type VisualDiffResult = {
   changedPageCount: number
   totalRegions: number
   failedPages: number
-  openCvAvailable: boolean
 }
 
 export type VisualDiffOptions = {
@@ -43,91 +34,18 @@ const RENDER_SCALE = 2
 // subpixel font rendering) are ignored via the blur + threshold, and nearby
 // changed pixels are merged into a single region via dilation so a changed word
 // or figure becomes one box instead of dozens of speckles.
-const DIFF_THRESHOLD = 30
-const BLUR_KERNEL = 5
-const DILATE_KERNEL = 11
-const DILATE_ITERATIONS = 2
-const MIN_REGION_AREA_FRACTION = 0.00008
+const DIFF_OPTIONS: ImageDiffOptions = {
+  threshold: 30,
+  blurKernel: 5,
+  dilateKernel: 11,
+  dilateIterations: 2,
+  minRegionAreaFraction: 0.00008,
+}
 
 type RenderedPage = {
   canvas: HTMLCanvasElement
   width: number
   height: number
-}
-
-// Compare two equally-rendered page canvases and return the bounding boxes of
-// the regions that differ, as fractions of the page dimensions.
-const computeDiffBoxes = (cv: CV, left: HTMLCanvasElement, right: HTMLCanvasElement): DiffBox[] => {
-  const mats: Mat[] = []
-  const track = <T extends Mat>(mat: T): T => {
-    mats.push(mat)
-    return mat
-  }
-
-  const contours = new cv.MatVector()
-  const hierarchy = track(new cv.Mat())
-
-  try {
-    const src1 = track(cv.imread(left))
-    const src2 = track(cv.imread(right))
-
-    const gray1 = track(new cv.Mat())
-    const gray2 = track(new cv.Mat())
-    cv.cvtColor(src1, gray1, cv.COLOR_RGBA2GRAY)
-    cv.cvtColor(src2, gray2, cv.COLOR_RGBA2GRAY)
-
-    // The two pages may differ slightly in size; align the second onto the
-    // first so a pixel-wise comparison is meaningful.
-    if (gray2.rows !== gray1.rows || gray2.cols !== gray1.cols) {
-      const resized = track(new cv.Mat())
-      cv.resize(gray2, resized, new cv.Size(gray1.cols, gray1.rows), 0, 0, cv.INTER_AREA)
-      resized.copyTo(gray2)
-    }
-
-    const blurSize = new cv.Size(BLUR_KERNEL, BLUR_KERNEL)
-    cv.GaussianBlur(gray1, gray1, blurSize, 0, 0, cv.BORDER_DEFAULT)
-    cv.GaussianBlur(gray2, gray2, blurSize, 0, 0, cv.BORDER_DEFAULT)
-
-    const diff = track(new cv.Mat())
-    cv.absdiff(gray1, gray2, diff)
-
-    const thresh = track(new cv.Mat())
-    cv.threshold(diff, thresh, DIFF_THRESHOLD, 255, cv.THRESH_BINARY)
-
-    const kernel = track(cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(DILATE_KERNEL, DILATE_KERNEL)))
-    cv.dilate(thresh, thresh, kernel, new cv.Point(-1, -1), DILATE_ITERATIONS, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue())
-
-    cv.findContours(thresh, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-
-    const pageWidth = gray1.cols
-    const pageHeight = gray1.rows
-    const minArea = pageWidth * pageHeight * MIN_REGION_AREA_FRACTION
-
-    const boxes: DiffBox[] = []
-    for (let i = 0; i < contours.size(); i += 1) {
-      const contour = contours.get(i)
-      const rect = cv.boundingRect(contour)
-      contour.delete()
-
-      if (rect.width * rect.height < minArea) {
-        continue
-      }
-
-      boxes.push({
-        left: rect.x / pageWidth,
-        top: rect.y / pageHeight,
-        width: rect.width / pageWidth,
-        height: rect.height / pageHeight,
-      })
-    }
-
-    return boxes
-  } finally {
-    contours.delete()
-    for (const mat of mats) {
-      mat.delete()
-    }
-  }
 }
 
 const appendBoxes = (canvasWrap: HTMLElement, boxes: DiffBox[]) => {
@@ -202,40 +120,15 @@ const appendCanvas = (section: HTMLElement, rendered: RenderedPage): HTMLElement
   return wrap
 }
 
-// When OpenCV is unavailable the page image is shown but no difference boxes can
-// be drawn, which is easy to mistake for "no changes". Stamp a large, obvious
-// watermark across every page so it is unmistakable that the visual comparison
-// did not actually run.
-const appendOpenCvWatermark = (canvasWrap: HTMLElement) => {
-  const watermark = document.createElement('div')
-  watermark.className = 'pdf-page-watermark'
-
-  const label = document.createElement('span')
-  label.className = 'pdf-page-watermark-text'
-  label.textContent = 'OPENCV DID NOT LOAD'
-  watermark.append(label)
-
-  canvasWrap.append(watermark)
-}
-
 /**
- * Render both PDFs page by page as full page images and use OpenCV to compare
- * each pair of pages visually, boxing the regions of the page image that
- * differ. The whole, unedited page is always shown; the OpenCV comparison only
- * adds the difference boxes on top.
+ * Render both PDFs page by page as full page images and compare each pair of
+ * pages visually with a pure-TypeScript pixel diff, boxing the regions of the
+ * page image that differ. The whole, unedited page is always shown; the
+ * comparison only adds the difference boxes on top.
  */
 export async function renderVisualDiff({ leftFile, rightFile, leftContainer, rightContainer }: VisualDiffOptions): Promise<VisualDiffResult> {
   leftContainer.innerHTML = ''
   rightContainer.innerHTML = ''
-
-  // OpenCV is best-effort: if it fails to initialize we still render every page
-  // so the user sees the whole PDF, just without the difference boxes.
-  let cv: CV | null = null
-  try {
-    cv = await loadOpenCv()
-  } catch (error) {
-    console.warn('[pdfdiff] OpenCV failed to initialize; rendering without difference boxes:', error)
-  }
 
   const [leftDoc, rightDoc] = await Promise.all([
     loadPdfDocument(new Uint8Array(await leftFile.arrayBuffer())),
@@ -280,33 +173,20 @@ export async function renderVisualDiff({ leftFile, rightFile, leftContainer, rig
       console.warn(`[pdfdiff] could not render page ${pageNumber} as an image:`, error)
     }
 
-    // Without OpenCV no comparison happened; stamp each rendered page so the
-    // user cannot mistake the absence of boxes for "no differences".
-    if (!cv) {
-      if (leftWrap) {
-        appendOpenCvWatermark(leftWrap)
-      }
-      if (rightWrap) {
-        appendOpenCvWatermark(rightWrap)
-      }
-    }
-
     let status: PageStatus = 'unchanged'
     let regionCount = 0
 
-    if (hasLeft && hasRight && leftRendered && rightRendered) {
-      if (cv && leftWrap && rightWrap) {
-        try {
-          const boxes = computeDiffBoxes(cv, leftRendered.canvas, rightRendered.canvas)
-          regionCount = boxes.length
-          if (boxes.length) {
-            appendBoxes(leftWrap, boxes)
-            appendBoxes(rightWrap, boxes)
-            status = 'changed'
-          }
-        } catch (error) {
-          console.warn(`[pdfdiff] could not compute visual diff for page ${pageNumber}:`, error)
+    if (hasLeft && hasRight && leftRendered && rightRendered && leftWrap && rightWrap) {
+      try {
+        const boxes = computeDiffBoxes(leftRendered.canvas, rightRendered.canvas, DIFF_OPTIONS)
+        regionCount = boxes.length
+        if (boxes.length) {
+          appendBoxes(leftWrap, boxes)
+          appendBoxes(rightWrap, boxes)
+          status = 'changed'
         }
+      } catch (error) {
+        console.warn(`[pdfdiff] could not compute visual diff for page ${pageNumber}:`, error)
       }
     } else if (hasLeft && !hasRight) {
       status = 'removed'
@@ -330,6 +210,5 @@ export async function renderVisualDiff({ leftFile, rightFile, leftContainer, rig
     changedPageCount,
     totalRegions,
     failedPages,
-    openCvAvailable: cv !== null,
   }
 }

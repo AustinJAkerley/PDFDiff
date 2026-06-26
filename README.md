@@ -1,12 +1,12 @@
 # PDF Diff
 
-PDF Diff is a Manifest V3 browser extension that compares two local PDFs in-browser, renders the whole pages side by side as images, and uses **OpenCV** to box the visual differences directly on the rendered pages. It runs in Chrome, Microsoft Edge, and Firefox.
+PDF Diff is a Manifest V3 browser extension that compares two local PDFs in-browser, renders the whole pages side by side as images, and boxes the visual differences directly on the rendered pages using a built-in pixel-diff engine. It runs in Chrome, Microsoft Edge, and Firefox.
 
 ## Features
 
 - Popup action with **Open PDF Diff** button
 - Side-by-side **rendered** PDF pages (via `pdf.js`) showing the whole, unedited page image — not a text dump
-- **Image-based visual diff** powered by OpenCV: each page pair is compared pixel-by-pixel and every region that changed is boxed on both the original (left) and the new PDF (right)
+- **Image-based visual diff** computed in plain TypeScript: each page pair is compared pixel-by-pixel and every region that changed is boxed on both the original (left) and the new PDF (right)
 - Summary bar with the number of changed pages and difference regions
 - Change navigator listing every changed page; clicking a page scrolls both documents to it
 - Pages that exist in only one document are flagged as added/removed
@@ -30,10 +30,10 @@ The build output is written to `dist/` and can be loaded as an unpacked extensio
 The build also copies pdf.js's external resource bundles (CMaps, the standard 14
 fonts, and the WASM image decoders for scanned JBIG2/JPEG 2000 pages) into
 `dist/pdfjs/`. These are required so that PDFs using non-embedded standard
-fonts, CID/CJK fonts, or scanned images can be read and rendered. The OpenCV
-runtime used for the visual diff is copied to `dist/opencv/opencv.js` and loaded
-at runtime. The extension manifest allows `wasm-unsafe-eval` so the pdf.js image
-decoders and the OpenCV WebAssembly module can run.
+fonts, CID/CJK fonts, or scanned images can be read and rendered. The visual
+diff itself is implemented in plain TypeScript (`src/lib/imageDiff.ts`) and needs
+no extra runtime. The extension manifest allows `wasm-unsafe-eval` so the pdf.js
+image decoders can run.
 
 ## Load in Chrome
 
