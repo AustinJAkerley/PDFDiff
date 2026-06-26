@@ -6,8 +6,10 @@
 // real worker so the methods exist by the time a document is parsed.
 import { installUint8ArrayBase64HexPolyfill } from './uint8ArrayBase64Hex'
 import { installMapGetOrInsertPolyfill } from './mapGetOrInsert'
+import { installMathSumPrecisePolyfill } from './mathSumPrecise'
 
 installUint8ArrayBase64HexPolyfill()
 installMapGetOrInsertPolyfill()
+installMathSumPrecisePolyfill()
 
 import 'pdfjs-dist/build/pdf.worker.mjs'

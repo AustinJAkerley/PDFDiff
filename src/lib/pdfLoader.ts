@@ -3,6 +3,7 @@ import type { PDFDocumentProxy } from 'pdfjs-dist'
 import pdfWorkerUrl from './pdfWorker?worker&url'
 import { installUint8ArrayBase64HexPolyfill } from './uint8ArrayBase64Hex'
 import { installMapGetOrInsertPolyfill } from './mapGetOrInsert'
+import { installMathSumPrecisePolyfill } from './mathSumPrecise'
 
 // pdf.js v6 uses the TC39 Uint8Array hex/base64 methods on both the main thread
 // and the worker. Polyfill the main thread here and use a custom worker entry
@@ -11,6 +12,10 @@ installUint8ArrayBase64HexPolyfill()
 // pdf.js v6 also uses Map/WeakMap getOrInsert(Computed) while rendering pages;
 // without it page.render throws and the page cannot be shown as an image.
 installMapGetOrInsertPolyfill()
+// pdf.js v6 uses Math.sumPrecise while regenerating form-field appearances; on
+// browsers lacking it, fields without a baked appearance (NeedAppearances) such
+// as SSN or amount boxes silently render blank.
+installMathSumPrecisePolyfill()
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
