@@ -189,13 +189,10 @@ function DiffLegend({ status }: { status: 'idle' | 'computing' | 'ready' | 'erro
   return (
     <div className="diff-legend" aria-live="polite">
       <span className="diff-legend-item">
-        <span className="diff-swatch diff-swatch--added" /> Added
+        <span className="diff-swatch diff-swatch--removed" /> Removed / changed (left)
       </span>
       <span className="diff-legend-item">
-        <span className="diff-swatch diff-swatch--removed" /> Removed
-      </span>
-      <span className="diff-legend-item">
-        <span className="diff-swatch diff-swatch--modified" /> Modified
+        <span className="diff-swatch diff-swatch--added" /> Added / changed (right)
       </span>
       {message ? <span className="diff-legend-status">{message}</span> : null}
     </div>

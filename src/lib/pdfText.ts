@@ -23,6 +23,11 @@ type TextItemLike = {
   height: number
 }
 
+// Fraction of a glyph's height that sits above the text baseline. The remainder
+// (1 - ASCENT_RATIO) accounts for descenders below the baseline. Used to anchor
+// highlight boxes snugly over the visible glyphs instead of floating above them.
+const ASCENT_RATIO = 0.8
+
 function isTextItem(item: unknown): item is TextItemLike {
   return typeof (item as TextItemLike)?.str === 'string' && Array.isArray((item as TextItemLike).transform)
 }
@@ -53,7 +58,13 @@ function splitItemIntoTokens(
   // item.height is the font height in device units; fall back to the transform
   // scale when the PDF reports a zero height.
   const height = item.height || Math.hypot(item.transform[2], item.transform[3])
-  const top = baselineY - height
+
+  // The text item's origin sits on the baseline. Glyphs extend mostly above the
+  // baseline (ascent) with a little below it (descent). Anchoring the box at
+  // `baseline - height` left a gap of empty space above the text and made the
+  // box look too high, so split `height` into an ascent above and a descent
+  // below the baseline to sit snugly over the glyphs.
+  const top = baselineY - height * ASCENT_RATIO
   const totalWidth = item.width
 
   // Distribute the run width across characters so each word gets a slice.
