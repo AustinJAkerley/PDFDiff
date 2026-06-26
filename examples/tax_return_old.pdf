@@ -1,0 +1,93 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F_regular 3 0 R /F_bold 4 0 R /F_italic 5 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 1685 >>
+stream
+BT
+/F_bold 20 Tf
+1 0 0 1 56.00 716.00 Tm
+(Form 1040  -  U.S. Individual Income Tax Return) Tj
+/F_bold 11 Tf
+1 0 0 1 56.00 692.00 Tm
+(Tax Year 2023) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 676.15 Tm
+(Name: Jordan A. Rivera        SSN: 123-45-6789) Tj
+1 0 0 1 56.00 661.30 Tm
+(Filing Status: Single) Tj
+1 0 0 1 56.00 646.45 Tm
+(Dependents: 0) Tj
+1 0 0 1 56.00 631.60 Tm
+() Tj
+/F_bold 14 Tf
+1 0 0 1 56.00 609.75 Tm
+(Income) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 590.85 Tm
+(1   Wages \(W-2, box 1\) ........................ $162,000) Tj
+1 0 0 1 56.00 576.00 Tm
+(2   Taxable interest .......................... $1,240) Tj
+1 0 0 1 56.00 561.15 Tm
+(3   Qualified dividends ....................... $2,950) Tj
+1 0 0 1 56.00 546.30 Tm
+(4   Capital gains ............................. $0) Tj
+1 0 0 1 56.00 531.45 Tm
+(5   Total income ............................. $166,190) Tj
+/F_bold 14 Tf
+1 0 0 1 56.00 507.60 Tm
+(Deductions & Tax) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 488.70 Tm
+(12  Standard deduction ....................... $13,850) Tj
+1 0 0 1 56.00 473.85 Tm
+(15  Taxable income ........................... $152,340) Tj
+1 0 0 1 56.00 459.00 Tm
+(16  Tax ...................................... $30,110) Tj
+1 0 0 1 56.00 444.15 Tm
+(19  Child tax credit ......................... $0) Tj
+/F_bold 14 Tf
+1 0 0 1 56.00 420.30 Tm
+(Payments & Refund) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 401.40 Tm
+(25  Federal tax withheld ..................... $28,600) Tj
+1 0 0 1 56.00 386.55 Tm
+(37  Amount you owe ........................... $1,510) Tj
+/F_italic 10 Tf
+1 0 0 1 56.00 366.70 Tm
+(This is fictional sample data for testing only - not a real tax return.) Tj
+ET
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000185 00000 n 
+0000000260 00000 n 
+0000000338 00000 n 
+0000000501 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+2238
+%%EOF

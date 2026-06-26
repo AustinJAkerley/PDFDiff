@@ -1,0 +1,92 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F_regular 3 0 R /F_bold 4 0 R /F_italic 5 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 1404 >>
+stream
+BT
+/F_bold 20 Tf
+1 0 0 1 56.00 716.00 Tm
+(Residential Lease Agreement) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 692.00 Tm
+(Landlord: Cascade Property Mgmt.   Tenant: Jordan A. Rivera) Tj
+1 0 0 1 56.00 677.15 Tm
+(Premises: 88 Birch Street, Apt 4B, Seattle, WA 98103) Tj
+1 0 0 1 56.00 662.30 Tm
+() Tj
+/F_bold 11 Tf
+1 0 0 1 56.00 643.45 Tm
+(1. Term) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 627.60 Tm
+(Lease term: 12 months, beginning March 1, 2024.) Tj
+/F_bold 11 Tf
+1 0 0 1 56.00 612.75 Tm
+(2. Rent) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 596.90 Tm
+(Monthly rent: $2,400, due on the 1st of each month.) Tj
+1 0 0 1 56.00 582.05 Tm
+(Late fee: $50 after a 5-day grace period.) Tj
+/F_bold 11 Tf
+1 0 0 1 56.00 567.20 Tm
+(3. Security Deposit) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 551.35 Tm
+(Security deposit: $2,400.) Tj
+/F_bold 11 Tf
+1 0 0 1 56.00 536.50 Tm
+(4. Utilities) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 520.65 Tm
+(Tenant pays electricity and internet. Landlord pays water and trash.) Tj
+/F_bold 11 Tf
+1 0 0 1 56.00 505.80 Tm
+(5. Pets) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 489.95 Tm
+(No pets are permitted on the premises.) Tj
+/F_bold 11 Tf
+1 0 0 1 56.00 475.10 Tm
+(6. Parking) Tj
+/F_regular 11 Tf
+1 0 0 1 56.00 459.25 Tm
+(Parking is not included with this unit.) Tj
+/F_italic 10 Tf
+1 0 0 1 56.00 439.40 Tm
+(Sample lease for testing the PDF diff tool. Not legal advice.) Tj
+ET
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000185 00000 n 
+0000000260 00000 n 
+0000000338 00000 n 
+0000000501 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+1957
+%%EOF
