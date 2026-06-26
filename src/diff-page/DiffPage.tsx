@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import PdfViewer from './PdfViewer'
 
 type Side = 'left' | 'right'
 
@@ -39,9 +40,7 @@ function PdfPane({
       </div>
 
       {url ? (
-        <object className="pdf-frame" data={url} type="application/pdf" aria-label={fileName ?? label}>
-          <p className="pdf-fallback">This PDF could not be displayed inline.</p>
-        </object>
+        <PdfViewer url={url} ariaLabel={fileName ?? label} />
       ) : (
         <div
           className="pdf-dropzone"

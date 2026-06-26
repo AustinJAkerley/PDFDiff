@@ -101,10 +101,42 @@ body {
   cursor: pointer;
 }
 
-.pdf-frame {
+.pdf-canvas-scroll {
   flex: 1 1 auto;
-  width: 100%;
-  border: 0;
+  min-height: 0;
+  overflow: auto;
+  background: #525659;
+}
+
+.pdf-canvas-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.pdf-page-canvas-wrap {
+  position: relative;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.5);
+  background: #fff;
+}
+
+.pdf-page-canvas {
+  display: block;
+}
+
+.pdf-page-highlight-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pdf-highlight {
+  position: absolute;
+  border-radius: 1px;
+  background: rgba(250, 204, 21, 0.35);
+  outline: 1px solid rgba(202, 138, 4, 0.8);
 }
 
 .pdf-fallback {

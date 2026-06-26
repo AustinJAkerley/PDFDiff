@@ -1,9 +1,71 @@
-import { resolve } from 'node:path'
+import { cpSync, createReadStream, existsSync, mkdirSync, statSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import type { ServerResponse } from 'node:http'
+import { dirname, join, resolve } from 'node:path'
+import type { Plugin } from 'vite'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const require = createRequire(import.meta.url)
+
+// Resolve the installed pdfjs-dist package root so we can copy its runtime
+// assets (worker, cmaps, fonts, wasm, icc profiles) alongside the built app.
+const pdfjsRoot = dirname(require.resolve('pdfjs-dist/package.json'))
+
+// Items copied verbatim into `<out>/pdfjs/`. The viewer loads them from this
+// stable location at runtime (see src/lib/pdfLoader.ts).
+const PDFJS_ASSETS: Array<{ from: string; to: string }> = [
+  { from: 'build/pdf.worker.min.mjs', to: 'pdf.worker.min.mjs' },
+  { from: 'cmaps', to: 'cmaps' },
+  { from: 'standard_fonts', to: 'standard_fonts' },
+  { from: 'wasm', to: 'wasm' },
+  { from: 'iccs', to: 'iccs' },
+]
+
+// For production builds, copy pdf.js assets into the output `pdfjs/` folder.
+function copyPdfjsAssets(): Plugin {
+  return {
+    name: 'copy-pdfjs-assets',
+    apply: 'build',
+    writeBundle(options) {
+      const outDir = options.dir ?? resolve(__dirname, 'dist')
+      const pdfjsOut = join(outDir, 'pdfjs')
+      mkdirSync(pdfjsOut, { recursive: true })
+      for (const asset of PDFJS_ASSETS) {
+        const src = join(pdfjsRoot, asset.from)
+        if (!existsSync(src)) continue
+        cpSync(src, join(pdfjsOut, asset.to), { recursive: true })
+      }
+    },
+  }
+}
+
+// During `vite dev` the assets are not on disk, so serve them straight from
+// node_modules under the same `/pdfjs/` path the build uses.
+function servePdfjsAssets(): Plugin {
+  return {
+    name: 'serve-pdfjs-assets',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/pdfjs', (req, res: ServerResponse, next) => {
+        const rel = decodeURIComponent((req.url ?? '').split('?')[0]).replace(/^\/+/, '')
+        const target = join(pdfjsRoot, rel)
+        // Prevent path traversal outside the pdfjs package.
+        if (!target.startsWith(pdfjsRoot) || !existsSync(target) || statSync(target).isDirectory()) {
+          next()
+          return
+        }
+        if (target.endsWith('.mjs')) res.setHeader('Content-Type', 'text/javascript')
+        else if (target.endsWith('.wasm')) res.setHeader('Content-Type', 'application/wasm')
+        res.setHeader('Cache-Control', 'no-cache')
+        createReadStream(target).pipe(res)
+      })
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), copyPdfjsAssets(), servePdfjsAssets()],
   build: {
     rollupOptions: {
       input: {
