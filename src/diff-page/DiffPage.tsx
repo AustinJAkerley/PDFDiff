@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { renderVisualDiff, type PageVisualDiff, type VisualDiffResult } from '../lib/visualDiff'
+import { renderSinglePdf, renderVisualDiff, type PageVisualDiff, type VisualDiffResult } from '../lib/visualDiff'
 
 type Side = 'left' | 'right'
 
@@ -157,6 +157,16 @@ export default function DiffPage() {
 
     if (left && right) {
       void processFiles(left, right)
+    } else {
+      // Only one PDF is available so far: show it immediately rather than
+      // waiting for the second file. The diff runs once both are uploaded.
+      const container = side === 'left' ? leftContainerRef.current : rightContainerRef.current
+      if (container) {
+        renderSinglePdf(file, container, side).catch((renderError) => {
+          const detail = renderError instanceof Error ? ` (${renderError.message})` : ''
+          setError(`Unable to display the PDF. Please try a different file.${detail}`)
+        })
+      }
     }
   }
 

@@ -22,8 +22,8 @@ body {
 }
 
 .diff-page-root {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   padding: 1.5rem;
 }
 

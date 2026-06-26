@@ -121,6 +121,31 @@ const appendCanvas = (section: HTMLElement, rendered: RenderedPage): HTMLElement
 }
 
 /**
+ * Render every page of a single PDF into a container as full page images,
+ * without any diff comparison. Used to show a document immediately when the
+ * user uploads it, before the second file is available for comparison.
+ */
+export async function renderSinglePdf(file: File, container: HTMLElement, idPrefix: 'left' | 'right'): Promise<void> {
+  container.innerHTML = ''
+
+  const doc = await loadPdfDocument(new Uint8Array(await file.arrayBuffer()))
+
+  for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber += 1) {
+    const section = createPageSection(idPrefix, pageNumber)
+
+    try {
+      const rendered = await renderPage(doc, pageNumber)
+      appendCanvas(section, rendered)
+    } catch (error) {
+      console.warn(`[pdfdiff] could not render page ${pageNumber} as an image:`, error)
+      appendMissingPage(section, 'This page could not be displayed.')
+    }
+
+    container.append(section)
+  }
+}
+
+/**
  * Render both PDFs page by page as full page images and compare each pair of
  * pages visually with a pure-TypeScript pixel diff, boxing the regions of the
  * page image that differ. The whole, unedited page is always shown; the
