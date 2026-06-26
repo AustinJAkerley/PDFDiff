@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
 type Side = 'left' | 'right'
 
@@ -73,37 +73,33 @@ export default function DiffPage() {
   const [leftName, setLeftName] = useState<string | null>(null)
   const [rightName, setRightName] = useState<string | null>(null)
 
-  // Track the live object URLs so they can be revoked only when the page
-  // unmounts. Replacement cleanup is handled in handleFileSelected.
-  const urlsRef = useRef<{ left: string | null; right: string | null }>({ left: null, right: null })
-
-  useEffect(() => {
-    urlsRef.current = { left: leftUrl, right: rightUrl }
-  }, [leftUrl, rightUrl])
-
-  useEffect(
-    () => () => {
-      if (urlsRef.current.left) URL.revokeObjectURL(urlsRef.current.left)
-      if (urlsRef.current.right) URL.revokeObjectURL(urlsRef.current.right)
-    },
-    [],
-  )
+  const sides: Record<
+    Side,
+    {
+      setUrl: React.Dispatch<React.SetStateAction<string | null>>
+      setName: React.Dispatch<React.SetStateAction<string | null>>
+    }
+  > = {
+    left: { setUrl: setLeftUrl, setName: setLeftName },
+    right: { setUrl: setRightUrl, setName: setRightName },
+  }
 
   const handleFileSelected = (side: Side, file: File) => {
     const url = URL.createObjectURL(file)
-    if (side === 'left') {
-      setLeftUrl((previous) => {
-        if (previous) URL.revokeObjectURL(previous)
-        return url
-      })
-      setLeftName(file.name)
-    } else {
-      setRightUrl((previous) => {
-        if (previous) URL.revokeObjectURL(previous)
-        return url
-      })
-      setRightName(file.name)
+
+    // URL.createObjectURL always returns a same-origin blob: URL, never a
+    // script-executable scheme. Verify defensively before rendering it.
+    if (!url.startsWith('blob:')) {
+      URL.revokeObjectURL(url)
+      return
     }
+
+    const { setUrl, setName } = sides[side]
+    setUrl((previous) => {
+      if (previous) URL.revokeObjectURL(previous)
+      return url
+    })
+    setName(file.name)
   }
 
   return (
