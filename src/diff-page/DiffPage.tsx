@@ -265,6 +265,8 @@ export default function DiffPage() {
     if (!changes.length) {
       return
     }
+    // Wrap around both ends so Previous/Next cycle through the list; the
+    // extra `+ changes.length` keeps the result non-negative for index -1.
     const clamped = (index + changes.length) % changes.length
     setActiveChangeIndex(clamped)
     scrollToPage(changes[clamped].pageNumber)
